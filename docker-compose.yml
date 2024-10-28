@@ -1,0 +1,36 @@
+services:
+    db:
+        image: postgres:16.4
+        container_name: postgres-db
+        environment:
+            - POSTGRES_DB=${DATABASE_NAME}
+            - POSTGRES_USER=${DATABASE_USER}
+            - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+        volumes:
+            - db-volume:/var/lib/postgresql/data
+            # - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+        ports:
+            - "${DATABASE_PORT}:5432"
+
+    redis:
+        image: redis:6.2-alpine
+        restart: unless-stopped
+        container_name: redis
+        ports:
+            - "${REDIS_PORT}:6379"
+        command: redis-server --save 60 1 --loglevel warning
+
+    redis-commander:
+        container_name: redis-commander
+        hostname: redis-commander
+        image: rediscommander/redis-commander:latest
+        environment:
+            - REDIS_HOST=redis
+        ports:
+            - "127.0.0.1:8081:8081"
+        depends_on:
+            - redis
+        restart: unless-stopped
+
+volumes:
+    db-volume:
