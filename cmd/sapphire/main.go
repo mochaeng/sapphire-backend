@@ -7,10 +7,12 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mochaeng/sapphire-backend/internal/app"
 	"github.com/mochaeng/sapphire-backend/internal/auth"
+	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/database"
 	"github.com/mochaeng/sapphire-backend/internal/env"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
 	"github.com/mochaeng/sapphire-backend/internal/ratelimiter"
+	service "github.com/mochaeng/sapphire-backend/internal/services"
 	redisstore "github.com/mochaeng/sapphire-backend/internal/store/cache/redis"
 	"github.com/mochaeng/sapphire-backend/internal/store/postgres"
 
@@ -44,9 +46,9 @@ func main() {
 		logger.Fatalw("error loading .env file", "err", err)
 	}
 
-	cfg := app.Cfg{
+	cfg := &config.Cfg{
 		Addr: env.GetString("ADDR", ":7777"),
-		DbConfig: app.DbCfg{
+		DbConfig: config.DbCfg{
 			Addr: env.GetString(
 				"DATABASE_ADDR",
 				"postgres://hutao:adminpassword@localhost:8888/limerence?sslmode=disable",
@@ -55,9 +57,9 @@ func main() {
 			MaxIdleConns:       env.GetInt("DATABASE_MAX_IDLE_CONNS", 30),
 			MaxConnIdleSeconds: env.GetInt("DATABASE_MAX_CONN_IDLE_SECONDS", 900),
 		},
-		Cacher: app.CacheCfg{
+		Cacher: config.CacheCfg{
 			IsEnable: env.GetBool("CACHER_IS_ENABLE", true),
-			Redis: app.RedisCfg{
+			Redis: config.RedisCfg{
 				Addr:     env.GetString("REDIS_ADDR", "localhost:6379"),
 				Password: env.GetString("REDIS_PASSWORD", ""),
 				Db:       env.GetInt("REDIS_DB", 0),
@@ -68,22 +70,22 @@ func main() {
 		MediaFolder: "data",
 		ApiURL:      env.GetString("EXTERNAL_URL", "localhost:7777"),
 		FrontedURL:  env.GetString("FRONTED_URL", "http://localhost:3000"),
-		Mail: app.MailCfg{
+		Mail: config.MailCfg{
 			Expired:   24 * time.Hour,
 			FromEmail: env.GetString("FROM_EMAIL", ""),
 		},
-		Auth: app.AuthCfg{
-			Basic: app.BasicAuthCfg{
+		Auth: config.AuthCfg{
+			Basic: config.BasicAuthCfg{
 				Username: env.GetString("AUTH_BASIC_USER", ""),
 				Password: env.GetString("AUTH_BASIC_PASSWORD", ""),
 			},
-			Token: app.TokenCfg{
+			Token: config.TokenCfg{
 				Secret:  env.GetString("JWT_SECRET", ""),
 				Expired: 24 * 7 * time.Hour,
 				Issuer:  "sapphire",
 			},
 		},
-		RateLimiter: app.RateLimiterConfig{
+		RateLimiter: config.RateLimiterConfig{
 			RequestPerTimeFrame: env.GetInt("RATE_LIMITER_REQUESTS_COUNT", 20),
 			TimeFrame:           time.Second * 5,
 			IsEnable:            env.GetBool("RATE_LIMITER_ENABLED", true),
@@ -142,14 +144,21 @@ func main() {
 		cfg.RateLimiter.TimeFrame,
 	)
 
-	app := &app.Application{
-		Config:        cfg,
+	serviceCfg := config.ServiceCfg{
+		Logger:        logger,
 		Store:         store,
-		CacheStore:    cacheStore,
+		Cfg:           cfg,
 		Mailer:        clientMailer,
 		Authenticator: jwtAuthenticator,
-		Logger:        logger,
-		RateLimiter:   rateLimiter,
+		CacheStore:    cacheStore,
+	}
+	services := service.NewServices(&serviceCfg)
+
+	app := &app.Application{
+		Config:      cfg,
+		Service:     services,
+		Logger:      logger,
+		RateLimiter: rateLimiter,
 	}
 	mux := app.Mount()
 	app.Logger.Fatal(app.Run(mux))

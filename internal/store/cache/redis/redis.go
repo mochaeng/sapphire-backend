@@ -13,8 +13,8 @@ func NewRedisClient(addr string, password string, db int) *redis.Client {
 	})
 }
 
-func NewRedisStore(rdb *redis.Client) cache.Store {
-	return cache.Store{
+func NewRedisStore(rdb *redis.Client) *cache.Store {
+	return &cache.Store{
 		User: &UserStore{rdb: rdb},
 	}
 }

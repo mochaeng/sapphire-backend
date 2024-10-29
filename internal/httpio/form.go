@@ -10,7 +10,7 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/media"
 )
 
-func ReadFormDataValue(r *http.Request, data any) error {
+func ReadFormDataValues(r *http.Request, data any) error {
 	dataValuesPtr := reflect.ValueOf(data)
 	if dataValuesPtr.Kind() != reflect.Ptr || dataValuesPtr.IsNil() {
 		return ErrWrongParameterType
@@ -42,7 +42,7 @@ func ReadFormDataValue(r *http.Request, data any) error {
 	return nil
 }
 
-func ReadFormFiles(r *http.Request, fileField string, maxReadSize int64) ([]byte, error) {
+func ReadFormFile(r *http.Request, fileField string, maxReadSize int64) ([]byte, error) {
 	file, fileHeader, err := r.FormFile(fileField)
 	if err != nil {
 		return nil, nil

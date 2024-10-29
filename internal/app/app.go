@@ -14,23 +14,18 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/mochaeng/sapphire-backend/docs"
-	"github.com/mochaeng/sapphire-backend/internal/auth"
-	"github.com/mochaeng/sapphire-backend/internal/mailer"
+	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/ratelimiter"
-	"github.com/mochaeng/sapphire-backend/internal/store"
-	"github.com/mochaeng/sapphire-backend/internal/store/cache"
+	service "github.com/mochaeng/sapphire-backend/internal/services"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
 type Application struct {
-	Store         store.Store
-	CacheStore    cache.Store
-	Config        Cfg
-	Authenticator auth.Authenticator
-	Mailer        mailer.Client
-	Logger        *zap.SugaredLogger
-	RateLimiter   ratelimiter.RateLimiter
+	Service     *service.Service
+	Config      *config.Cfg
+	Logger      *zap.SugaredLogger
+	RateLimiter ratelimiter.RateLimiter
 }
 
 func (app *Application) Mount() http.Handler {
@@ -84,15 +79,15 @@ func (app *Application) Mount() http.Handler {
 				r.Group(func(r chi.Router) {
 					r.Use(app.authTokenMiddleware)
 					r.Use(app.postContextMiddleware)
-					r.Patch("/", app.checkPostOwnership(roles["moderator"].level, app.updatePostHandler))
-					r.Delete("/", app.checkPostOwnership(roles["admin"].level, app.deletePostHandler))
+					r.Patch("/", app.checkPostOwnership(config.Roles["moderator"].Level, app.updatePostHandler))
+					r.Delete("/", app.checkPostOwnership(config.Roles["admin"].Level, app.deletePostHandler))
 				})
 			})
 		})
 
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register/user", app.registerUserHandler)
-			r.Post("/token", app.createTokenHandler)
+			r.Post("/token", app.createUserTokenHandler)
 		})
 	})
 

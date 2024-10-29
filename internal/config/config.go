@@ -1,52 +1,51 @@
-package app
+package config
 
 import (
 	"time"
 
-	"github.com/go-playground/validator/v10"
+	"github.com/mochaeng/sapphire-backend/internal/auth"
+	"github.com/mochaeng/sapphire-backend/internal/mailer"
+	"github.com/mochaeng/sapphire-backend/internal/store"
+	"github.com/mochaeng/sapphire-backend/internal/store/cache"
+	"go.uber.org/zap"
 )
 
-const MaxUploadSize int64 = 10_485_760 // 10MB
+const MaxMediaUploadSize int64 = 10_485_760 // 10MB
 
 type roleHelper struct {
-	id    int
-	level int
+	ID    int
+	Level int
 }
 
 var (
-	Validate *validator.Validate
-	roles    = map[string]roleHelper{
+	Roles = map[string]roleHelper{
 		"user": {
-			id:    1,
-			level: 1,
+			ID:    1,
+			Level: 1,
 		},
 		"moderator": {
-			id:    2,
-			level: 2,
+			ID:    2,
+			Level: 2,
 		},
 		"admin": {
-			id:    3,
-			level: 3,
+			ID:    3,
+			Level: 3,
 		},
 	}
 )
 
-func init() {
-	Validate = validator.New(validator.WithRequiredStructEnabled())
-}
-
 type Cfg struct {
 	Addr        string
 	DbConfig    DbCfg
-	Env         string
 	Version     string
 	MediaFolder string
 	ApiURL      string
-	FrontedURL  string
 	Mail        MailCfg
 	Auth        AuthCfg
 	Cacher      CacheCfg
 	RateLimiter RateLimiterConfig
+	Env         string
+	FrontedURL  string
 }
 
 type DbCfg struct {
@@ -54,6 +53,15 @@ type DbCfg struct {
 	MaxOpenConns       int
 	MaxIdleConns       int
 	MaxConnIdleSeconds int
+}
+
+type ServiceCfg struct {
+	Logger        *zap.SugaredLogger
+	Store         *store.Store
+	CacheStore    *cache.Store
+	Cfg           *Cfg
+	Mailer        mailer.Client
+	Authenticator auth.Authenticator
 }
 
 type CacheCfg struct {

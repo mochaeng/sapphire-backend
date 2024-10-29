@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
-	"github.com/mochaeng/sapphire-backend/internal/store"
+	"github.com/mochaeng/sapphire-backend/internal/models"
+	service "github.com/mochaeng/sapphire-backend/internal/services"
 )
 
 // GetUserFeed godoc
@@ -27,24 +28,26 @@ import (
 //	@Security		ApiKeyAuth
 //	@Router			/user/feed [get]
 func (app *Application) GetUserFeedHandler(w http.ResponseWriter, r *http.Request) {
-	feedQuery := store.PaginateFeedQuery{
+	feedQuery := models.PaginateFeedQuery{
 		Limit:  20,
 		Offset: 0,
 		Sort:   "desc",
 	}
-	err := feedQuery.Parse(r)
-	if err != nil {
+	if err := feedQuery.Parse(r); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
-	if err := Validate.Struct(feedQuery); err != nil {
-		app.BadRequestResponse(w, r, err)
-		return
-	}
+
 	user := getUserFromContext(r)
-	feed, err := app.Store.Feed.Get(r.Context(), user.ID, feedQuery)
+
+	feed, err := app.Service.Feed.Get(r.Context(), user.ID, &feedQuery)
 	if err != nil {
-		app.InternalServerErrorResponse(w, r, err)
+		switch err {
+		case service.ErrInvalidPayload:
+			app.BadRequestResponse(w, r, err)
+		default:
+			app.InternalServerErrorResponse(w, r, err)
+		}
 		return
 	}
 	if err := httpio.JsonResponse(w, http.StatusOK, feed); err != nil {

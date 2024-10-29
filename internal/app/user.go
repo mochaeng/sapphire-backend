@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -17,15 +16,10 @@ func getUserFromContext(r *http.Request) *models.User {
 	return user
 }
 
-func getAuthenticatedUserFromContext(r *http.Request) *models.User {
-	user, _ := r.Context().Value(userCtx).(*models.User)
-	return user
-}
-
 // GetUser godoc
 //
-//	@Summary		Fetches a user profile
-//	@Description	Fetches a user profile by ID
+//	@Summary		Fetches a user
+//	@Description	Fetches by ID users that are already activated in the system.
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
@@ -69,7 +63,7 @@ func (app *Application) getUserByUsername(w http.ResponseWriter, r *http.Request
 		app.BadRequestResponse(w, r, httpio.ErrEmptyParam)
 		return
 	}
-	user, err := app.Store.User.GetByUsername(r.Context(), username)
+	user, err := app.Service.User.GetByUsername(r.Context(), username)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
@@ -109,25 +103,25 @@ func (app *Application) getUserByUsername(w http.ResponseWriter, r *http.Request
 //	@Security		ApiKeyAuth
 //	@Router			/user/{userID}/follow [put]
 func (app *Application) followUserHandler(w http.ResponseWriter, r *http.Request) {
-	followerdUser := getAuthenticatedUserFromContext(r)
+	followerdUser := getUserFromContext(r)
 	followedID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
 	if err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
-	if err := app.Store.User.Follow(r.Context(), followerdUser.ID, followedID); err != nil {
+
+	if err := app.Service.User.Follow(r.Context(), followerdUser.ID, followedID); err != nil {
 		switch err {
 		case store.ErrConflict:
 			app.ConflictResponse(w, r, err)
-		case store.ForeignKeyViolation:
-			app.NotFoundResponse(w, r, err)
-		case store.ErrNotFound:
+		case store.ForeignKeyViolation, store.ErrNotFound:
 			app.NotFoundResponse(w, r, err)
 		default:
 			app.InternalServerErrorResponse(w, r, err)
 		}
 		return
 	}
+
 	httpio.NoContentResponse(w)
 }
 
@@ -147,25 +141,25 @@ func (app *Application) followUserHandler(w http.ResponseWriter, r *http.Request
 //	@Security		ApiKeyAuth
 //	@Router			/user/{userID}/unfollow [put]
 func (app *Application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
-	unfollowerUser := getAuthenticatedUserFromContext(r)
+	unfollowerUser := getUserFromContext(r)
 	unfollowedID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
 	if err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
-	if err := app.Store.User.Unfollow(r.Context(), unfollowerUser.ID, unfollowedID); err != nil {
+
+	if err := app.Service.User.Unfollow(r.Context(), unfollowerUser.ID, unfollowedID); err != nil {
 		switch err {
 		case store.ErrConflict:
 			app.ConflictResponse(w, r, err)
-		case store.ForeignKeyViolation:
-			app.NotFoundResponse(w, r, err)
-		case store.ErrNotFound:
+		case store.ForeignKeyViolation, store.ErrNotFound:
 			app.NotFoundResponse(w, r, err)
 		default:
 			app.InternalServerErrorResponse(w, r, err)
 		}
 		return
 	}
+
 	httpio.NoContentResponse(w)
 }
 
@@ -186,7 +180,7 @@ func (app *Application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		app.BadRequestResponse(w, r, httpio.ErrEmptyParam)
 		return
 	}
-	err := app.Store.User.Activate(r.Context(), token)
+	err := app.Service.User.Activate(r.Context(), token)
 	if err != nil {
 		switch err {
 		case store.ErrNotFound:
@@ -197,26 +191,4 @@ func (app *Application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	httpio.NoContentResponse(w)
-}
-
-func (app *Application) getUserWithCache(ctx context.Context, userID int64) (*models.User, error) {
-	if !app.Config.Cacher.IsEnable {
-		return app.Store.User.GetByID(ctx, userID)
-	}
-	app.Logger.Infow("cache hit", "userID", userID)
-	user, err := app.CacheStore.User.Get(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	if user == nil {
-		app.Logger.Infow("fetching from the database", "id", userID)
-		user, err = app.Store.User.GetByID(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		if err := app.CacheStore.User.Set(ctx, user); err != nil {
-			return nil, err
-		}
-	}
-	return user, nil
 }

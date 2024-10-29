@@ -30,7 +30,7 @@ func (s *PostStore) Create(ctx context.Context, post *models.Post) error {
 		pq.Array(post.Tags),
 	).Scan(&post.ID, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
-		return errorUserTransform(err)
+		return errorPostTransform(err)
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (s *PostStore) GetByID(ctx context.Context, postID int64) (*models.Post, er
 		&post.UpdatedAt,
 	)
 	if err != nil {
-		return nil, errorUserTransform(err)
+		return nil, errorPostTransform(err)
 	}
 	return &post, nil
 }
@@ -86,7 +86,7 @@ func (s *PostStore) GetByIDWithUser(ctx context.Context, postID int64) (*models.
 		&post.User.LastName,
 	)
 	if err != nil {
-		return nil, errorUserTransform(err)
+		return nil, errorPostTransform(err)
 	}
 	return &post, nil
 }
@@ -139,7 +139,7 @@ func (s *PostStore) DeleteByID(ctx context.Context, postID int64) error {
 	`
 	result, err := s.db.ExecContext(ctx, query, postID)
 	if err != nil {
-		return errorUserTransform(err)
+		return errorPostTransform(err)
 	}
 	count, err := result.RowsAffected()
 	if err != nil {
@@ -156,20 +156,23 @@ func (s *PostStore) UpdateByID(ctx context.Context, post *models.Post) error {
 	defer cancel()
 	query := `
 		update "post"
-		set tittle = $2,
-			"content" = $3
+		set tittle = $2, "content" = $3
 		where id = $1
+		returning post.tittle, post."content", post.updated_at
 	`
-	result, err := s.db.ExecContext(ctx, query, post.ID, post.Tittle, post.Content)
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		post.ID,
+		post.Tittle,
+		post.Content,
+	).Scan(
+		&post.Tittle,
+		&post.Content,
+		&post.UpdatedAt,
+	)
 	if err != nil {
-		return errorUserTransform(err)
-	}
-	count, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if count == 0 {
-		return store.ErrNotFound
+		return errorPostTransform(err)
 	}
 	return nil
 }

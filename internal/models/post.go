@@ -19,11 +19,13 @@ type CreatePostPayload struct {
 }
 
 type CreatePostResponse struct {
+	ID        int64    `json:"id"`
 	Tittle    string   `json:"tittle"`
 	Content   string   `json:"content"`
 	Tags      []string `json:"tags,omitempty"`
 	MediaURL  string   `json:"media_url,omitempty"`
 	CreatedAt string   `json:"created_at"`
+	UserID    int64    `json:"user_id"`
 }
 
 type UpdatePostPayload struct {

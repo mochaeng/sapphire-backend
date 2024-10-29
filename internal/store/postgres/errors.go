@@ -39,6 +39,16 @@ func errorUserTransform(err error) error {
 	return nil
 }
 
+func errorPostTransform(err error) error {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return store.ErrNotFound
+		}
+		return err
+	}
+	return nil
+}
+
 func errorRoleTransforme(err error) error {
 	if err != nil {
 		if err == sql.ErrNoRows {

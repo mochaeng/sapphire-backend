@@ -11,7 +11,7 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
 
-func Seed(store store.Store, db *sql.DB) {
+func Seed(store *store.Store, db *sql.DB) {
 	ctx := context.Background()
 
 	tx, _ := db.BeginTx(ctx, nil)

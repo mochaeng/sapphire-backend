@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,7 +30,7 @@ func (app *Application) postContextMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		ctx := r.Context()
-		post, err := app.Store.Post.GetByIDWithUser(ctx, postID)
+		post, err := app.Service.Post.GetWithUser(ctx, postID)
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:
@@ -53,7 +52,7 @@ func (app *Application) userContextMiddleware(next http.Handler) http.Handler {
 			app.BadRequestResponse(w, r, err)
 			return
 		}
-		user, err := app.getUserWithCache(r.Context(), userID)
+		user, err := app.Service.User.GetCached(r.Context(), userID)
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:
@@ -98,7 +97,6 @@ func (app *Application) basicAuthMiddleware(next http.Handler) http.Handler {
 
 func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("ATUH")
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			app.UnauthorizedErrorResponse(w, r, ErrAuthorizationHeaderMissing)
@@ -109,7 +107,7 @@ func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 			app.UnauthorizedErrorResponse(w, r, ErrAuthorizationHeaderMalformed)
 			return
 		}
-		jwtToken, err := app.Authenticator.ValidateToken(parts[1])
+		jwtToken, err := app.Service.Auth.ValidateToken(parts[1])
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return
@@ -121,7 +119,7 @@ func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		ctx := r.Context()
-		user, err := app.getUserWithCache(ctx, userID)
+		user, err := app.Service.User.GetCached(ctx, userID)
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return

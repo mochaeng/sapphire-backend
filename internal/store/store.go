@@ -38,7 +38,7 @@ type Store struct {
 		Delete(ctx context.Context, userID int64) error
 	}
 	Feed interface {
-		Get(ctx context.Context, userID int64, paginateQuery PaginateFeedQuery) ([]*models.PostWithMetadata, error)
+		Get(ctx context.Context, userID int64, paginateQuery models.PaginateFeedQuery) ([]*models.PostWithMetadata, error)
 	}
 	Comment interface {
 		GetByPostID(context.Context, int64) (*[]models.Comment, error)

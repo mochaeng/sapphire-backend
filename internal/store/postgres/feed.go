@@ -13,7 +13,7 @@ type FeedStore struct {
 	db *sql.DB
 }
 
-func (s *FeedStore) Get(ctx context.Context, userID int64, paginateQuery store.PaginateFeedQuery) ([]*models.PostWithMetadata, error) {
+func (s *FeedStore) Get(ctx context.Context, userID int64, paginateQuery models.PaginateFeedQuery) ([]*models.PostWithMetadata, error) {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
 	query := `

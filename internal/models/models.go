@@ -1,19 +1,17 @@
 package models
 
-import (
-	"time"
-)
+import "github.com/go-playground/validator/v10"
+
+var Validate *validator.Validate
+
+func init() {
+	Validate = validator.New(validator.WithRequiredStructEnabled())
+}
 
 type Follower struct {
 	FollowerID int64  `json:"follower_id"`
 	FollowedID int64  `json:"followed_id"`
 	CreatedAt  string `json:"created_at"`
-}
-
-type UserInvitation struct {
-	User    *User         `json:"user"`
-	Token   string        `json:"token"`
-	Expired time.Duration `json:"expired"`
 }
 
 type UserComment struct {

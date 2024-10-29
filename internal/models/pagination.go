@@ -1,12 +1,17 @@
-package store
+package models
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
+)
+
+var (
+	ErrInvalidDateFormat = errors.New("invalid date format passed")
 )
 
 const (

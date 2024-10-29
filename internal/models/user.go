@@ -1,6 +1,10 @@
 package models
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type User struct {
 	ID        int64
@@ -12,6 +16,25 @@ type User struct {
 	CreatedAt string
 	IsActive  bool
 	Role      Role
+}
+
+type password struct {
+	Hash []byte
+}
+
+func (p *password) Set(text string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	p.Hash = hash
+	return nil
+}
+
+type UserInvitation struct {
+	User    *User         `json:"user"`
+	Token   string        `json:"token"`
+	Expired time.Duration `json:"expired"`
 }
 
 type UserResponse struct {
@@ -31,15 +54,26 @@ type UpdateUserPayload struct{}
 
 type DeleteUserPayload struct{}
 
-type password struct {
-	Hash []byte
+type RegisterUserPayload struct {
+	Username  string `json:"username" validate:"required,max=16,min=3"`
+	Email     string `json:"email" validate:"required,email,max=255"`
+	Password  string `json:"password" validate:"required,min=3,max=72"`
+	FirstName string `json:"first_name" validate:"required,min=2,max=30"`
+	LastName  string `json:"last_name" validate:"max=30"`
 }
 
-func (p *password) Set(text string) error {
-	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	p.Hash = hash
-	return nil
+type RegisterUserResponse struct {
+	Username  string `json:"username"`
+	CreatedAt string `json:"created_at"`
+	IsActive  bool   `json:"is_active"`
+	Token     string `json:"token"`
+}
+
+type CreateUserTokenPayload struct {
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=3,max=72"`
+}
+
+type CreateTokenResponse struct {
+	Token string `json:"token"`
 }

@@ -3,11 +3,11 @@ package app
 import (
 	"errors"
 	"net/http"
-	"path/filepath"
 
+	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
-	"github.com/mochaeng/sapphire-backend/internal/media"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	service "github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
 
@@ -19,7 +19,7 @@ func getPostFromCtx(r *http.Request) *models.Post {
 // CreatePost godoc
 //
 //	@Summary		Creates a post
-//	@Description	Allows a user to create their own post
+//	@Description	A activated and authenticated user can create a post
 //	@Tags			post
 //	@Accept			mpfd
 //	@Produce		json
@@ -32,62 +32,47 @@ func getPostFromCtx(r *http.Request) *models.Post {
 //	@Security		ApiKeyAuth
 //	@Router			/post [post]
 func (app *Application) createPostHandler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(MaxUploadSize)
+	err := r.ParseMultipartForm(config.MaxMediaUploadSize)
 	if err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
 
 	var payload models.CreatePostPayload
-	if err := httpio.ReadFormDataValue(r, &payload); err != nil {
-		switch err {
-		case httpio.ErrMarshalData, httpio.ErrWrongParameterType:
-			app.InternalServerErrorResponse(w, r, err)
-		default:
-			app.BadRequestResponse(w, r, err)
-		}
-		return
-	}
-	if err := Validate.Struct(payload); err != nil {
+	if err := httpio.ReadFormDataValues(r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
 
 	fileField := "media"
-	file, err := httpio.ReadFormFiles(r, fileField, MaxUploadSize)
+	file, err := httpio.ReadFormFile(r, fileField, config.MaxMediaUploadSize)
 	if err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
-	fileUrl := ""
-	if file != nil {
-		filename, err := media.SaveFileToServer(file, app.Config.MediaFolder)
-		if err != nil {
-			app.InternalServerErrorResponse(w, r, err)
-			return
-		}
-		fileUrl = filepath.Join(app.Config.MediaFolder, filename)
-	}
 
 	user := getUserFromContext(r)
-	post := &models.Post{
-		Tittle:  payload.Tittle,
-		Content: payload.Content,
-		Media:   fileUrl,
-		Tags:    payload.Tags,
-		User:    user,
-	}
-	if err := app.Store.Post.Create(r.Context(), post); err != nil {
-		app.InternalServerErrorResponse(w, r, err)
+	post, err := app.Service.Post.Create(r.Context(), user, &payload, file)
+	if err != nil {
+		switch err {
+		case service.ErrInvalidPayload, service.ErrSaveFile:
+			app.BadRequestResponse(w, r, err)
+		case store.ErrNotFound:
+			app.NotFoundResponse(w, r, err)
+		default:
+			app.InternalServerErrorResponse(w, r, err)
+		}
 		return
 	}
 
 	response := &models.CreatePostResponse{
+		ID:        post.ID,
 		Tittle:    post.Tittle,
 		Content:   post.Content,
 		Tags:      post.Tags,
 		MediaURL:  post.Media,
 		CreatedAt: post.CreatedAt,
+		UserID:    user.ID,
 	}
 	if err := httpio.JsonResponse(w, http.StatusCreated, response); err != nil {
 		app.InternalServerErrorResponse(w, r, err)
@@ -145,14 +130,7 @@ func (app *Application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 //	@Router			/post/{postID} [delete]
 func (app *Application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
-	// idParam := chi.URLParam(r, "postID")
-	// postID, err := strconv.ParseInt(idParam, 10, 64)
-	// if err != nil {
-	// 	app.BadRequestResponse(w, r, err)
-	// 	return
-	// }
-	app.Logger.Infow("what", "post", post)
-	if err := app.Store.Post.DeleteByID(r.Context(), post.ID); err != nil {
+	if err := app.Service.Post.Delete(r.Context(), post.ID); err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
 			app.NotFoundResponse(w, r, err)
@@ -186,19 +164,10 @@ func (app *Application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		app.BadRequestResponse(w, r, err)
 		return
 	}
-	if err := Validate.Struct(payload); err != nil {
-		app.BadRequestResponse(w, r, err)
-		return
-	}
-	if payload.Content != "" {
-		post.Content = payload.Content
-	}
-	if payload.Tittle != "" {
-		post.Tittle = payload.Tittle
-	}
-	if err := app.Store.Post.UpdateByID(r.Context(), post); err != nil {
-		switch {
-		case errors.Is(err, store.ErrNotFound):
+
+	if err := app.Service.Post.Update(r.Context(), post, &payload); err != nil {
+		switch err {
+		case store.ErrNotFound:
 			app.NotFoundResponse(w, r, err)
 		default:
 			app.InternalServerErrorResponse(w, r, err)
