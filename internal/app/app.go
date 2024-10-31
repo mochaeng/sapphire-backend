@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	"net/http"
 	"os"
@@ -51,8 +52,9 @@ func (app *Application) Mount() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
-		// r.With(app.basicAuthMiddleware).Get("/health", app.healthCheckHandler)
 		r.Get("/health", app.healthCheckHandler)
+
+		r.With(app.basicAuthMiddleware).Get("/debug/vars", expvar.Handler().ServeHTTP)
 
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 

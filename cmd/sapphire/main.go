@@ -1,7 +1,9 @@
 package main
 
 import (
+	"expvar"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -76,8 +78,8 @@ func main() {
 		},
 		Auth: config.AuthCfg{
 			Basic: config.BasicAuthCfg{
-				Username: env.GetString("AUTH_BASIC_USER", ""),
-				Password: env.GetString("AUTH_BASIC_PASSWORD", ""),
+				Username: env.GetString("AUTH_BASIC_USER", "admin"),
+				Password: env.GetString("AUTH_BASIC_PASSWORD", "admin"),
 			},
 			Token: config.TokenCfg{
 				Secret:  env.GetString("JWT_SECRET", ""),
@@ -160,6 +162,15 @@ func main() {
 		Logger:      logger,
 		RateLimiter: rateLimiter,
 	}
+
+	expvar.NewString("version").Set(cfg.Version)
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
 	mux := app.Mount()
 	app.Logger.Fatal(app.Run(mux))
 }
