@@ -13,6 +13,12 @@ type PostStore struct {
 	db *sql.DB
 }
 
+func newTestPostStore(connStr string) *PostStore {
+	db := createDB(connStr)
+	store := &PostStore{db}
+	return store
+}
+
 func (s *PostStore) Create(ctx context.Context, post *models.Post) error {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()

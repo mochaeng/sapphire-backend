@@ -5,20 +5,18 @@ import (
 
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	service "github.com/mochaeng/sapphire-backend/internal/services"
-	"github.com/mochaeng/sapphire-backend/internal/store"
 	"github.com/stretchr/testify/mock"
 )
 
-func NewMockService(store *store.Store) service.Service {
+func NewMockService() service.Service {
 	return service.Service{
-		User: &MockUserService{Store: store},
-		Post: &MockPostService{Store: store},
+		User: &MockUserService{},
+		Post: &MockPostService{},
 	}
 }
 
 type MockUserService struct {
 	mock.Mock
-	*store.Store
 }
 
 func (m *MockUserService) Follow(ctx context.Context, followerID int64, followedID int64) error {
@@ -48,7 +46,6 @@ func (m *MockUserService) GetCached(ctx context.Context, userID int64) (*models.
 
 type MockPostService struct {
 	mock.Mock
-	*store.Store
 }
 
 func (m *MockPostService) Create(ctx context.Context, user *models.User, payload *models.CreatePostPayload, file []byte) (*models.Post, error) {

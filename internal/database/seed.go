@@ -6,10 +6,16 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
 
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
+
+func GetSeedContentFromFile(path string) ([]byte, error) {
+	return os.ReadFile(filepath.Clean(path))
+}
 
 func Seed(store *store.Store, db *sql.DB) {
 	ctx := context.Background()

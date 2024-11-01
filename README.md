@@ -37,3 +37,5 @@ go run cmd/seed/main.go
 ```sh
 air
 ```
+
+# Bugs

@@ -70,7 +70,7 @@ func (app *Application) createPostHandler(w http.ResponseWriter, r *http.Request
 		Tittle:    post.Tittle,
 		Content:   post.Content,
 		Tags:      post.Tags,
-		MediaURL:  post.Media,
+		MediaURL:  post.Media.String,
 		CreatedAt: post.CreatedAt,
 		UserID:    user.ID,
 	}
@@ -99,7 +99,7 @@ func (app *Application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 		Tittle:    post.Tittle,
 		Content:   post.Content,
 		Tags:      post.Tags,
-		MediaURL:  post.Media,
+		MediaURL:  post.Media.String,
 		CreatedAt: post.CreatedAt,
 		UpdatedAt: post.CreatedAt,
 		User: models.UserResponse{

@@ -17,8 +17,7 @@ func newTestApplication(t *testing.T) *Application {
 	// logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
 
-	mockStore := mocks.NewMockStore()
-	mockService := mocks.NewMockService(&mockStore)
+	mockService := mocks.NewMockService()
 
 	return &Application{
 		Config:  &config.Cfg{},

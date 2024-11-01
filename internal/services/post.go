@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"path/filepath"
 
@@ -36,9 +37,12 @@ func (s *PostService) Create(ctx context.Context, user *models.User, payload *mo
 	post := &models.Post{
 		Tittle:  payload.Tittle,
 		Content: payload.Content,
-		Media:   fileURL,
-		Tags:    payload.Tags,
-		User:    user,
+		Media: sql.NullString{
+			String: fileURL,
+			Valid:  fileURL != "",
+		},
+		Tags: payload.Tags,
+		User: user,
 	}
 	if err := s.store.Post.Create(ctx, post); err != nil {
 		return nil, err
