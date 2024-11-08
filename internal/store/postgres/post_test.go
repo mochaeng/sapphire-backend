@@ -17,7 +17,7 @@ import (
 
 type PostStoreTestSuite struct {
 	suite.Suite
-	pgContainer *testutils.PostgresContainer
+	pgContainer *testutils.PostgresTestContainer
 	postStore   *PostStore
 	ctx         context.Context
 }
@@ -45,7 +45,7 @@ func (suite *PostStoreTestSuite) SetupSuite() {
 		suite.T().Fatalf("could not apply up migrations, err: %s", err)
 	}
 
-	err = testutils.RunTestSeed(suite.postStore.db, seedPath)
+	err = testutils.RunTestSeed(suite.postStore.db, unitSeedPath)
 	require.NoError(suite.T(), err, "could not seed test database")
 }
 
@@ -83,6 +83,6 @@ func (suite *PostStoreTestSuite) TestGetPost() {
 	assert.Equal(t, post.Content, "chaeyoung > lalisa")
 }
 
-func TestPostStoreTestSuite(t *testing.T) {
+func TestPostStoreSuite(t *testing.T) {
 	suite.Run(t, new(PostStoreTestSuite))
 }

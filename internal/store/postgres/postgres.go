@@ -14,3 +14,11 @@ func NewPostgresStore(db *sql.DB) *store.Store {
 		Feed:    &FeedStore{db: db},
 	}
 }
+
+func NewPostgresUserStore(db *sql.DB) *UserStore {
+	return &UserStore{db}
+}
+
+func NewPostgresPostStore(db *sql.DB) *UserStore {
+	return &UserStore{db}
+}

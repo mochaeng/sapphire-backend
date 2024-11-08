@@ -19,7 +19,7 @@ func main() {
 		"DATABASE_ADDR",
 		"postgres://hutao:adminpassword@localhost:8888/limerence?sslmode=disable",
 	)
-	conn, err := database.New(addr, 1, 1, 900)
+	conn, err := database.NewConnection(addr, 1, 1, 900)
 	if err != nil {
 		log.Printf("error while creating connection to seed the database: %s", err)
 		return

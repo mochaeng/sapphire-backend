@@ -16,7 +16,7 @@ import (
 
 type UserStoreTestSuite struct {
 	suite.Suite
-	pgContainer *testutils.PostgresContainer
+	pgContainer *testutils.PostgresTestContainer
 	userStore   *UserStore
 	ctx         context.Context
 }
@@ -40,7 +40,7 @@ func (suite *UserStoreTestSuite) SetupSuite() {
 		suite.T().Fatalf("could not apply up migrations, err: %s", err)
 	}
 
-	err = testutils.RunTestSeed(suite.userStore.db, seedPath)
+	err = testutils.RunTestSeed(suite.userStore.db, unitSeedPath)
 	require.NoError(suite.T(), err, "could no seed test database")
 }
 
@@ -71,7 +71,10 @@ func (suite *UserStoreTestSuite) TestCreateUser() {
 
 	err = tx.Commit()
 	require.NoError(t, err, "could not commit transaction")
+}
 
+func (suite *UserStoreTestSuite) TestRetrieveUser() {
+	t := suite.T()
 	retrivedUser, err := suite.userStore.GetByEmail(suite.ctx, "momo@mail.com")
 	require.NoError(t, err, "could not retrieve user")
 	assert.Equal(t, retrivedUser.FirstName, "momo")

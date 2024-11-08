@@ -1,0 +1,102 @@
+package integration
+
+import (
+	"database/sql"
+	"fmt"
+	"path/filepath"
+	"time"
+
+	"github.com/mochaeng/sapphire-backend/internal/app"
+	"github.com/mochaeng/sapphire-backend/internal/auth"
+	"github.com/mochaeng/sapphire-backend/internal/config"
+	"github.com/mochaeng/sapphire-backend/internal/mailer"
+	"github.com/mochaeng/sapphire-backend/internal/ratelimiter"
+	service "github.com/mochaeng/sapphire-backend/internal/services"
+	redisstore "github.com/mochaeng/sapphire-backend/internal/store/cache/redis"
+	"github.com/mochaeng/sapphire-backend/internal/store/postgres"
+	"github.com/mochaeng/sapphire-backend/internal/testutils"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
+)
+
+var (
+	migrationsPath      = fmt.Sprintf("file://%s", filepath.Join("..", "..", "migrate", "migrations"))
+	integrationSeedPath = filepath.Join("..", "..", "migrate", "tests", "integration_seed.sql")
+)
+
+func createNewAppSuite(db *sql.DB, redisContainer *testutils.RedisTestContainer) (*app.Application, error) {
+	// logger := zap.NewNop().Sugar()
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
+	cfg := &config.Cfg{
+		Env:         "dev",
+		MediaFolder: "data",
+		Cacher: config.CacheCfg{
+			IsEnable: true,
+		},
+		Mail: config.MailCfg{
+			Expired:   24 * time.Hour,
+			FromEmail: "mail@mail.mail",
+		},
+		Auth: config.AuthCfg{
+			Basic: config.BasicAuthCfg{
+				Username: "admin",
+				Password: "admin",
+			},
+			Token: config.TokenCfg{
+				Secret:  "secrettest",
+				Expired: 24 * 7 * time.Hour,
+				Issuer:  "sapphiretester",
+			},
+		},
+		RateLimiter: config.RateLimiterConfig{
+			RequestPerTimeFrame: 20,
+			TimeFrame:           time.Second * 5,
+			IsEnable:            true,
+		},
+	}
+
+	store := postgres.NewPostgresStore(db)
+
+	var rdb *redis.Client
+	if cfg.Cacher.IsEnable {
+		rdb = redisstore.NewRedisClient(redisContainer.ConnStrin, "", 0)
+	}
+	cacheStore := redisstore.NewRedisStore(rdb)
+
+	clientMailer, err := mailer.NewGomail("smtp.google.com", "", "")
+	if err != nil {
+		return nil, fmt.Errorf("could not create mailer, err: %s", err)
+	}
+
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		cfg.Auth.Token.Secret,
+		cfg.Auth.Token.Issuer,
+		cfg.Auth.Token.Issuer,
+		cfg.Auth.Token.Expired,
+	)
+
+	servicesCfg := &config.ServiceCfg{
+		Logger:        logger,
+		Store:         store,
+		Cfg:           cfg,
+		Mailer:        clientMailer,
+		Authenticator: jwtAuthenticator,
+		CacheStore:    cacheStore,
+	}
+	services := service.NewServices(servicesCfg)
+
+	ratelimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.RateLimiter.RequestPerTimeFrame,
+		cfg.RateLimiter.TimeFrame,
+	)
+
+	app := &app.Application{
+		Config:      cfg,
+		Service:     services,
+		Logger:      logger,
+		RateLimiter: ratelimiter,
+	}
+	return app, nil
+}

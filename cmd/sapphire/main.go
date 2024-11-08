@@ -102,7 +102,7 @@ func main() {
 		logger.Info("media folder was created", "path", cfg.MediaFolder)
 	}
 
-	db, err := database.New(
+	db, err := database.NewConnection(
 		cfg.DbConfig.Addr,
 		cfg.DbConfig.MaxOpenConns,
 		cfg.DbConfig.MaxIdleConns,

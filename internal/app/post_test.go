@@ -8,6 +8,7 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/mocks"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
+	"github.com/mochaeng/sapphire-backend/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -39,7 +40,7 @@ func TestGetPostHandler(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/v1/post/101", nil)
 		require.NoError(t, err)
 
-		rr := executeRequest(req, mux)
+		rr := testutils.ExecuteRequest(req, mux)
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var response struct {
@@ -58,7 +59,7 @@ func TestGetPostHandler(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/v1/post/1", nil)
 		require.NoError(t, err)
 
-		rr := executeRequest(req, mux)
+		rr := testutils.ExecuteRequest(req, mux)
 		assert.Equal(t, http.StatusNotFound, rr.Code)
 		assert.JSONEq(t, `{"error":"not found"}`, rr.Body.String())
 	})

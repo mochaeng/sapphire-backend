@@ -6,25 +6,33 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/database"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/modules/redis"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-type PostgresContainer struct {
+type PostgresTestContainer struct {
 	*postgres.PostgresContainer
 	ConnString string
 }
 
-func CreateDB(connStr string) *sql.DB {
+type RedisTestContainer struct {
+	*redis.RedisContainer
+	ConnStrin string
+}
+
+func NewPostgresConnection(connStr string) *sql.DB {
 	maxOpenConns := 10
 	maxIddleConns := 10
 	maxConnIdleSeconds := 120
-	db, err := database.New(
+	db, err := database.NewConnection(
 		connStr,
 		maxOpenConns,
 		maxIddleConns,
@@ -36,7 +44,27 @@ func CreateDB(connStr string) *sql.DB {
 	return db
 }
 
-func CreatePostgresContainer(ctx context.Context) (*PostgresContainer, error) {
+func CreateRedisContainer(ctx context.Context) (*RedisTestContainer, error) {
+	redisContainer, err := redis.Run(ctx,
+		"redis:6.2-alpine",
+		redis.WithSnapshotting(10, 1),
+		redis.WithLogLevel(redis.LogLevelVerbose),
+		// redis.WithConfigFile(filepath.Join("testdata", "redis7.conf")),
+	)
+	if err != nil {
+		return nil, err
+	}
+	connStr, err := redisContainer.ConnectionString(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &RedisTestContainer{
+		RedisContainer: redisContainer,
+		ConnStrin:      connStr,
+	}, nil
+}
+
+func CreatePostgresContainer(ctx context.Context) (*PostgresTestContainer, error) {
 	pgContainer, err := postgres.Run(ctx, "postgres:16.4",
 		// postgres.WithInitScripts(filepath.Join("..", "testdata", "init-db.sql")),
 		postgres.WithDatabase("test-db"),
@@ -53,7 +81,7 @@ func CreatePostgresContainer(ctx context.Context) (*PostgresContainer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &PostgresContainer{
+	return &PostgresTestContainer{
 		PostgresContainer: pgContainer,
 		ConnString:        connStr,
 	}, nil
@@ -75,4 +103,10 @@ func RunTestSeed(db *sql.DB, seedPath string) error {
 		}
 	}
 	return nil
+}
+
+func ExecuteRequest(r *http.Request, mux http.Handler) *httptest.ResponseRecorder {
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, r)
+	return rr
 }

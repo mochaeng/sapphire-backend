@@ -15,7 +15,7 @@ type PostStore struct {
 }
 
 func newTestPostStore(connStr string) *PostStore {
-	db := testutils.CreateDB(connStr)
+	db := testutils.NewPostgresConnection(connStr)
 	store := &PostStore{db}
 	return store
 }

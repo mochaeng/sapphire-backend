@@ -17,7 +17,7 @@ type UserStore struct {
 }
 
 func newTestUserStore(connStr string) *UserStore {
-	db := testutils.CreateDB(connStr)
+	db := testutils.NewPostgresConnection(connStr)
 	store := &UserStore{db}
 	return store
 }

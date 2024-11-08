@@ -1,8 +1,6 @@
 package app
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/mochaeng/sapphire-backend/internal/config"
@@ -24,10 +22,4 @@ func newTestApplication(t *testing.T) *Application {
 		Service: &mockService,
 		Logger:  logger,
 	}
-}
-
-func executeRequest(r *http.Request, mux http.Handler) *httptest.ResponseRecorder {
-	rr := httptest.NewRecorder()
-	mux.ServeHTTP(rr, r)
-	return rr
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func New(addr string, maxOpenConns int, maxIdleConns int, maxConnIddleSeconds int) (*sql.DB, error) {
+func NewConnection(addr string, maxOpenConns int, maxIdleConns int, maxConnIddleSeconds int) (*sql.DB, error) {
 	db, err := sql.Open("postgres", addr)
 	if err != nil {
 		return nil, err
