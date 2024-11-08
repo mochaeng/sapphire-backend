@@ -61,6 +61,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, payload *models.Register
 	if err != nil {
 		return nil, err
 	}
+	userInvitation.Token = plainToken
 
 	isSandBox := s.cfg.Env == "dev"
 	activationURL := fmt.Sprintf("%s/confirm/%s", s.cfg.FrontedURL, plainToken)
