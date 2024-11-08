@@ -7,6 +7,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
+	"github.com/mochaeng/sapphire-backend/internal/testutils"
 )
 
 type PostStore struct {
@@ -14,7 +15,7 @@ type PostStore struct {
 }
 
 func newTestPostStore(connStr string) *PostStore {
-	db := createDB(connStr)
+	db := testutils.CreateDB(connStr)
 	store := &PostStore{db}
 	return store
 }

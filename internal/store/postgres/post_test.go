@@ -9,6 +9,7 @@ import (
 	postgres "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -16,7 +17,7 @@ import (
 
 type PostStoreTestSuite struct {
 	suite.Suite
-	pgContainer *PostgresContainer
+	pgContainer *testutils.PostgresContainer
 	postStore   *PostStore
 	ctx         context.Context
 }
@@ -24,7 +25,7 @@ type PostStoreTestSuite struct {
 func (suite *PostStoreTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
 
-	pgContainer, err := createPostgresContainer(suite.ctx)
+	pgContainer, err := testutils.CreatePostgresContainer(suite.ctx)
 	if err != nil {
 		log.Fatalf("could not create postgres container, err: %s", err)
 	}
@@ -44,7 +45,7 @@ func (suite *PostStoreTestSuite) SetupSuite() {
 		suite.T().Fatalf("could not apply up migrations, err: %s", err)
 	}
 
-	err = runTestSeed(suite.postStore.db)
+	err = testutils.RunTestSeed(suite.postStore.db, seedPath)
 	require.NoError(suite.T(), err, "could not seed test database")
 }
 

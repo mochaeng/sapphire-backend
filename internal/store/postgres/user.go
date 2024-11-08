@@ -9,10 +9,17 @@ import (
 
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
+	"github.com/mochaeng/sapphire-backend/internal/testutils"
 )
 
 type UserStore struct {
 	db *sql.DB
+}
+
+func newTestUserStore(connStr string) *UserStore {
+	db := testutils.CreateDB(connStr)
+	store := &UserStore{db}
+	return store
 }
 
 func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *models.User) error {

@@ -1,4 +1,4 @@
-package postgres
+package testutils
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,17 +15,12 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var (
-	migrationsPath = fmt.Sprintf("file://%s", filepath.Join("..", "..", "..", "migrate", "migrations"))
-	seedPath       = filepath.Join("..", "..", "..", "migrate", "tests", "unit_seed.sql")
-)
-
 type PostgresContainer struct {
 	*postgres.PostgresContainer
 	ConnString string
 }
 
-func createDB(connStr string) *sql.DB {
+func CreateDB(connStr string) *sql.DB {
 	maxOpenConns := 10
 	maxIddleConns := 10
 	maxConnIdleSeconds := 120
@@ -42,7 +36,7 @@ func createDB(connStr string) *sql.DB {
 	return db
 }
 
-func createPostgresContainer(ctx context.Context) (*PostgresContainer, error) {
+func CreatePostgresContainer(ctx context.Context) (*PostgresContainer, error) {
 	pgContainer, err := postgres.Run(ctx, "postgres:16.4",
 		// postgres.WithInitScripts(filepath.Join("..", "testdata", "init-db.sql")),
 		postgres.WithDatabase("test-db"),
@@ -65,7 +59,7 @@ func createPostgresContainer(ctx context.Context) (*PostgresContainer, error) {
 	}, nil
 }
 
-func runTestSeed(db *sql.DB) error {
+func RunTestSeed(db *sql.DB, seedPath string) error {
 	content, err := database.GetSeedContentFromFile(seedPath)
 	if err != nil {
 		return fmt.Errorf("could not read seed file, err: %s", err)
