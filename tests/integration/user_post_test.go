@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -35,32 +37,33 @@ func (suite *UserPosterFlowSuite) SetupSuite() {
 	suite.ctx = context.Background()
 
 	pgContainer, err := testutils.CreatePostgresContainer(suite.ctx)
-	require.NoError(suite.T(), err, "could not create posgres container, error: %s", err)
+	require.NoError(suite.T(), err, ErrContainerNotStarting)
 	db := testutils.NewPostgresConnection(pgContainer.ConnString)
 	suite.db = db
 	suite.pgContainer = pgContainer
 
 	redisContainer, err := testutils.CreateRedisContainer(suite.ctx)
-	require.NoError(suite.T(), err, "could not create redis container, error: %s", err)
+	require.NoError(suite.T(), err, ErrContainerNotStarting)
 	suite.redisContainer = redisContainer
 
-	app, err := createNewAppSuite(db, redisContainer)
-	require.NoError(suite.T(), err, "could not create app, error: %s", err)
+	parsedRedisConnStr := strings.TrimPrefix(redisContainer.ConnStrin, "redis://")
+	app, err := createNewAppSuite(db, parsedRedisConnStr)
+	require.NoError(suite.T(), err)
 
 	suite.app = app
 	suite.mux = app.Mount()
 
 	driver, err := postgres.WithInstance(suite.db, &postgres.Config{})
-	require.NoError(suite.T(), err, "could not create driver, error: %s", err)
+	require.NoError(suite.T(), err, ErrMigrateDriverNotStarting)
 	migrator, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
-	require.NoError(suite.T(), err, "could not apply migrations, error: %s", err)
+	require.NoError(suite.T(), err, ErrMigrateApplying)
 
 	err = migrator.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		suite.T().Fatalf("could not apply migrations, error: %s", err)
+		suite.T().Fatalf("%s, err: %s", ErrMigrateApplying.Error(), err)
 	}
 	err = testutils.RunTestSeed(suite.db, integrationSeedPath)
-	require.NoError(suite.T(), err, "could not seed test database")
+	require.NoError(suite.T(), err, ErrDatabaseSeed)
 }
 
 func (suite *UserPosterFlowSuite) TearDownSuite() {
@@ -85,7 +88,20 @@ func (suite *UserPosterFlowSuite) TestMainFlow() {
 	}
 	response := suite.registerUser(userPayload)
 	suite.activateUser(response.Token)
-	_ = suite.generateUserToken(userPayload.Email, userPayload.Password)
+	jwtToken := suite.generateUserToken(userPayload.Email, userPayload.Password)
+
+	suite.makePost(
+		jwtToken,
+		"tittle post",
+		"this is a test using form-data",
+		[]string{"integration", "test", "learning"},
+	)
+	suite.makePost(
+		jwtToken,
+		"My second post",
+		"Hallo everyone. Nice to meet yall",
+		[]string{"first poster", "friendly"},
+	)
 }
 
 func TestUserPosterFlowSuite(t *testing.T) {
@@ -95,10 +111,10 @@ func TestUserPosterFlowSuite(t *testing.T) {
 func (suite *UserPosterFlowSuite) registerUser(payload *models.RegisterUserPayload) *models.RegisterUserResponse {
 	t := suite.T()
 	jsonData, err := json.Marshal(payload)
-	require.NoError(t, err, "could not marshal user struct")
+	require.NoError(t, err, ErrPayloadMarshal)
 
 	req, err := http.NewRequest(http.MethodPost, "/v1/auth/register/user", bytes.NewReader(jsonData))
-	require.NoError(t, err, "could not make HTTP Post request to register router, error: %s", err)
+	require.NoError(t, err, ErrRequestHTTP)
 
 	rr := testutils.ExecuteRequest(req, suite.mux)
 	assert.Equal(t, http.StatusCreated, rr.Code)
@@ -116,7 +132,7 @@ func (suite *UserPosterFlowSuite) activateUser(token string) {
 	t := suite.T()
 	activationURL := fmt.Sprintf("/v1/user/activate/%s", token)
 	req, err := http.NewRequest(http.MethodPut, activationURL, nil)
-	require.NoError(t, err, "could not make put resquest to activate user router, error: %s", err)
+	require.NoError(t, err, ErrRequestHTTP)
 	rr := testutils.ExecuteRequest(req, suite.mux)
 	assert.Equal(t, http.StatusNoContent, rr.Code)
 }
@@ -128,9 +144,9 @@ func (suite *UserPosterFlowSuite) generateUserToken(email string, password strin
 		Password: password,
 	}
 	jsonData, err := json.Marshal(payload)
-	require.NoError(t, err, "could not marshal data")
+	require.NoError(t, err, ErrPayloadMarshal)
 	req, err := http.NewRequest(http.MethodPost, "/v1/auth/token", bytes.NewReader(jsonData))
-	require.NoError(t, err, "could not make post request to generate token")
+	require.NoError(t, err, ErrRequestHTTP)
 	rr := testutils.ExecuteRequest(req, suite.mux)
 	assert.Equal(t, http.StatusCreated, rr.Code)
 
@@ -138,6 +154,32 @@ func (suite *UserPosterFlowSuite) generateUserToken(email string, password strin
 		Data models.CreateTokenResponse `json:"data"`
 	}
 	err = json.NewDecoder(rr.Body).Decode(&response)
-	require.NoError(t, err, "could not parse response")
+	require.NoError(t, err, ErrResponseParse)
 	return response.Data.Token
+}
+
+func (suite *UserPosterFlowSuite) makePost(jwtToken, tittle, content string, tags []string) {
+	t := suite.T()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	writer.WriteField("tittle", tittle)
+	writer.WriteField("content", content)
+	for _, tag := range tags {
+		writer.WriteField("tags", tag)
+	}
+	writer.Close()
+
+	req, err := http.NewRequest(http.MethodPost, "/v1/post/", body)
+	require.NoError(t, err, ErrRequestHTTP)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", jwtToken))
+
+	rr := testutils.ExecuteRequest(req, suite.mux)
+	var resp struct {
+		Data models.CreatePostResponse `json:"data"`
+	}
+	err = json.NewDecoder(rr.Body).Decode(&resp)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, rr.Code)
 }

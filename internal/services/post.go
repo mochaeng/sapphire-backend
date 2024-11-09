@@ -47,7 +47,7 @@ func (s *PostService) Create(ctx context.Context, user *models.User, payload *mo
 	if err := s.store.Post.Create(ctx, post); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return post, nil
 }
 
 func (s *PostService) Update(ctx context.Context, post *models.Post, payload *models.UpdatePostPayload) error {

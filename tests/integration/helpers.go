@@ -2,6 +2,7 @@ package integration
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -14,7 +15,6 @@ import (
 	service "github.com/mochaeng/sapphire-backend/internal/services"
 	redisstore "github.com/mochaeng/sapphire-backend/internal/store/cache/redis"
 	"github.com/mochaeng/sapphire-backend/internal/store/postgres"
-	"github.com/mochaeng/sapphire-backend/internal/testutils"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -22,9 +22,17 @@ import (
 var (
 	migrationsPath      = fmt.Sprintf("file://%s", filepath.Join("..", "..", "migrate", "migrations"))
 	integrationSeedPath = filepath.Join("..", "..", "migrate", "tests", "integration_seed.sql")
+
+	ErrContainerNotStarting     = errors.New("could not create posgres container")
+	ErrMigrateDriverNotStarting = errors.New("could not create driver")
+	ErrMigrateApplying          = errors.New("could not apply migrations")
+	ErrDatabaseSeed             = errors.New("could not seed database")
+	ErrPayloadMarshal           = errors.New("could not marshal user struct")
+	ErrRequestHTTP              = errors.New("could not make HTTP request")
+	ErrResponseParse            = errors.New("could not parse response")
 )
 
-func createNewAppSuite(db *sql.DB, redisContainer *testutils.RedisTestContainer) (*app.Application, error) {
+func createNewAppSuite(db *sql.DB, parsedRedisConnStr string) (*app.Application, error) {
 	// logger := zap.NewNop().Sugar()
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
@@ -61,7 +69,7 @@ func createNewAppSuite(db *sql.DB, redisContainer *testutils.RedisTestContainer)
 
 	var rdb *redis.Client
 	if cfg.Cacher.IsEnable {
-		rdb = redisstore.NewRedisClient(redisContainer.ConnStrin, "", 0)
+		rdb = redisstore.NewRedisClient(parsedRedisConnStr, "", 0)
 	}
 	cacheStore := redisstore.NewRedisStore(rdb)
 
