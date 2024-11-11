@@ -51,7 +51,6 @@ func Seed(store *store.Store, db *sql.DB) {
 	}
 
 	log.Println("finishing seeding database")
-	return
 }
 
 func generateUsers(amount int) []*models.User {
@@ -62,7 +61,7 @@ func generateUsers(amount int) []*models.User {
 			Username:  username,
 			FirstName: names[rand.Intn(len(names))],
 			LastName:  names[rand.Intn(len(names))],
-			Email:     username + fmt.Sprintf("@gmail.com"),
+			Email:     username + "@gmail.com",
 			Role: models.Role{
 				ID: 1,
 			},

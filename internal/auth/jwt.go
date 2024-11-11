@@ -11,10 +11,10 @@ type JWTAthenticator struct {
 	secret string
 	aud    string
 	exp    time.Duration
-	iat    time.Duration
-	iss    string
-	nbf    time.Duration
-	sub    int64
+	// iat    time.Duration
+	iss string
+	// nbf time.Duration
+	// sub int64
 }
 
 func NewJWTAuthenticator(secret, iss, aud string, exp time.Duration) *JWTAthenticator {

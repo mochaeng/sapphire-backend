@@ -29,7 +29,7 @@ func errorUserTransform(err error) error {
 			}
 			return store.ErrConflict
 		} else if ok && pqErr.Code == ForeignKeyViolation {
-			return store.ForeignKeyViolation
+			return store.ErrForeignKeyViolation
 		}
 		if err == sql.ErrNoRows {
 			return store.ErrNotFound
@@ -40,16 +40,6 @@ func errorUserTransform(err error) error {
 }
 
 func errorPostTransform(err error) error {
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return store.ErrNotFound
-		}
-		return err
-	}
-	return nil
-}
-
-func errorRoleTransforme(err error) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return store.ErrNotFound

@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	ErrDuplicateEmail    = errors.New("e-mail already taken")
-	ErrDuplicateUsername = errors.New("username already taken")
-	ForeignKeyViolation  = errors.New("no user was found")
+	ErrDuplicateEmail      = errors.New("e-mail already taken")
+	ErrDuplicateUsername   = errors.New("username already taken")
+	ErrForeignKeyViolation = errors.New("no user was found")
 )
 
 const QueryTimeoutDuration time.Duration = 5 * time.Second

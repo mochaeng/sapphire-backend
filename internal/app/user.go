@@ -114,7 +114,7 @@ func (app *Application) followUserHandler(w http.ResponseWriter, r *http.Request
 		switch err {
 		case store.ErrConflict:
 			app.ConflictResponse(w, r, err)
-		case store.ForeignKeyViolation, store.ErrNotFound:
+		case store.ErrForeignKeyViolation, store.ErrNotFound:
 			app.NotFoundResponse(w, r, err)
 		default:
 			app.InternalServerErrorResponse(w, r, err)
@@ -152,7 +152,7 @@ func (app *Application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 		switch err {
 		case store.ErrConflict:
 			app.ConflictResponse(w, r, err)
-		case store.ForeignKeyViolation, store.ErrNotFound:
+		case store.ErrForeignKeyViolation, store.ErrNotFound:
 			app.NotFoundResponse(w, r, err)
 		default:
 			app.InternalServerErrorResponse(w, r, err)

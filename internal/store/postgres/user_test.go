@@ -24,6 +24,7 @@ type UserStoreTestSuite struct {
 func (suite *UserStoreTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
 	pgContainer, err := testutils.CreatePostgresContainer(suite.ctx)
+	require.NoError(suite.T(), err)
 	suite.pgContainer = pgContainer
 
 	store := newTestUserStore(suite.pgContainer.ConnString)

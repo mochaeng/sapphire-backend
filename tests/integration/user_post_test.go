@@ -123,6 +123,7 @@ func (suite *UserPosterFlowSuite) registerUser(payload *models.RegisterUserPaylo
 		Data models.RegisterUserResponse `json:"data"`
 	}
 	err = json.NewDecoder(rr.Body).Decode(&response)
+	require.NoError(t, err)
 	assert.Equal(t, response.Data.Username, payload.Username)
 	assert.Equal(t, response.Data.IsActive, false)
 	return &response.Data
