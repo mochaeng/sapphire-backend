@@ -2,10 +2,15 @@ package main
 
 import (
 	"expvar"
+	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	postgresmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
 	"github.com/mochaeng/sapphire-backend/internal/app"
 	"github.com/mochaeng/sapphire-backend/internal/auth"
@@ -21,6 +26,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
+
+var migrationsPath = fmt.Sprintf("file://%s", filepath.Join("migrate", "migrations"))
 
 //	@title			Sapphire API
 //	@description	API for Sapphire
@@ -113,6 +120,20 @@ func main() {
 	}
 	defer db.Close()
 	logger.Info("database connection pool established")
+
+	driver, err := postgresmigrate.WithInstance(db, &postgresmigrate.Config{})
+	if err != nil {
+		logger.Fatalw("could not create driver for migrations", "error", err)
+	}
+	migrator, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
+	if err != nil {
+		logger.Fatalf("could not create database instance for migrations", "error", err)
+	}
+	err = migrator.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		logger.Fatalw("could not run migrations up", "err", err)
+	}
+
 	store := postgres.NewPostgresStore(db)
 
 	var rdb *redis.Client
