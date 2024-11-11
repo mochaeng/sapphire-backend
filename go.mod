@@ -1,6 +1,6 @@
 module github.com/mochaeng/sapphire-backend
 
-go 1.23.2
+go 1.23.0
 
 require (
 	github.com/go-chi/chi/v5 v5.1.0
@@ -17,6 +17,7 @@ require (
 	github.com/swaggo/swag v1.16.4
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.34.0
+	github.com/testcontainers/testcontainers-go/modules/redis v0.34.0
 	github.com/wneessen/go-mail v0.5.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.28.0
@@ -76,7 +77,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
-	github.com/testcontainers/testcontainers-go/modules/redis v0.34.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
