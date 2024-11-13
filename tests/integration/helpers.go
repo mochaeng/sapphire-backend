@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http/httptest"
 	"path/filepath"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/auth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
+	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/ratelimiter"
 	service "github.com/mochaeng/sapphire-backend/internal/services"
 	redisstore "github.com/mochaeng/sapphire-backend/internal/store/cache/redis"
@@ -18,6 +20,11 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
+
+type RegisterUserResponse struct {
+	Data models.RegisterUserResponse `json:"data"`
+	rr   *httptest.ResponseRecorder
+}
 
 var (
 	migrationsPath      = fmt.Sprintf("file://%s", filepath.Join("..", "..", "migrate", "migrations"))

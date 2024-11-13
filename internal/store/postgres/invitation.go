@@ -36,7 +36,7 @@ func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, userIn
 		time.Now().Add(userInvitation.Expired),
 	)
 	if err != nil {
-		return err
+		return errorUserTransform(err)
 	}
 	return nil
 }

@@ -31,9 +31,10 @@ func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	userInviation, err := app.Service.Auth.RegisterUser(r.Context(), &payload)
 	if err != nil {
 		switch err {
-		case service.ErrInvalidPayload, store.ErrDuplicateEmail:
-		case store.ErrDuplicateUsername:
+		case service.ErrInvalidPayload:
 			app.BadRequestResponse(w, r, err)
+		case store.ErrDuplicateEmail, store.ErrDuplicateUsername:
+			app.ConflictResponse(w, r, err)
 		case store.ErrNotFound:
 			app.NotFoundResponse(w, r, err)
 		default:
@@ -60,7 +61,7 @@ func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		models.CreateTokenPayload	true	"User credentials"
+//	@Param			payload	body		models.CreateUserTokenPayload	true	"User credentials"
 //	@Success		201		{object}	models.CreateTokenResponse	"Token"
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error

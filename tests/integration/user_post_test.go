@@ -79,6 +79,7 @@ func (suite *UserPosterFlowSuite) TearDownSuite() {
 }
 
 func (suite *UserPosterFlowSuite) TestMainFlow() {
+	t := suite.T()
 	userPayload := &models.RegisterUserPayload{
 		Username:  "gaga77",
 		FirstName: "Lady",
@@ -87,7 +88,10 @@ func (suite *UserPosterFlowSuite) TestMainFlow() {
 		Password:  "password123",
 	}
 	response := suite.registerUser(userPayload)
-	suite.activateUser(response.Token)
+	assert.Equal(t, response.Data.Username, userPayload.Username)
+	assert.Equal(t, response.Data.IsActive, false)
+
+	suite.activateUser(response.Data.Token)
 	jwtToken := suite.generateUserToken(userPayload.Email, userPayload.Password)
 
 	suite.makePost(
@@ -104,11 +108,47 @@ func (suite *UserPosterFlowSuite) TestMainFlow() {
 	)
 }
 
+func (suite *UserPosterFlowSuite) TestUserUniqueness() {
+	t := suite.T()
+
+	userPayload := &models.RegisterUserPayload{
+		Username:  "chae77",
+		FirstName: "son",
+		LastName:  "chaeyoung",
+		Email:     "chaechae@jype.com",
+		Password:  "password123",
+	}
+	response := suite.registerUser(userPayload)
+	assert.Equal(t, http.StatusCreated, response.rr.Code)
+	assert.Equal(t, response.Data.Username, userPayload.Username)
+	assert.Equal(t, response.Data.IsActive, false)
+
+	userSameEmailPayload := &models.RegisterUserPayload{
+		Username:  "aya",
+		FirstName: "aya",
+		LastName:  "son",
+		Email:     "chaechae@jype.com",
+		Password:  "password123",
+	}
+	response = suite.registerUser(userSameEmailPayload)
+	assert.Equal(t, http.StatusConflict, response.rr.Code)
+
+	userSameUsernamePayload := &models.RegisterUserPayload{
+		Username:  "chae77",
+		FirstName: "eva",
+		LastName:  "krauser",
+		Email:     "eva@jype.com",
+		Password:  "password123",
+	}
+	response = suite.registerUser(userSameUsernamePayload)
+	assert.Equal(t, http.StatusConflict, response.rr.Code)
+}
+
 func TestUserPosterFlowSuite(t *testing.T) {
 	suite.Run(t, new(UserPosterFlowSuite))
 }
 
-func (suite *UserPosterFlowSuite) registerUser(payload *models.RegisterUserPayload) *models.RegisterUserResponse {
+func (suite *UserPosterFlowSuite) registerUser(payload *models.RegisterUserPayload) RegisterUserResponse {
 	t := suite.T()
 	jsonData, err := json.Marshal(payload)
 	require.NoError(t, err, ErrPayloadMarshal)
@@ -117,16 +157,11 @@ func (suite *UserPosterFlowSuite) registerUser(payload *models.RegisterUserPaylo
 	require.NoError(t, err, ErrRequestHTTP)
 
 	rr := testutils.ExecuteRequest(req, suite.mux)
-	assert.Equal(t, http.StatusCreated, rr.Code)
 
-	var response struct {
-		Data models.RegisterUserResponse `json:"data"`
-	}
+	response := RegisterUserResponse{rr: rr}
 	err = json.NewDecoder(rr.Body).Decode(&response)
 	require.NoError(t, err)
-	assert.Equal(t, response.Data.Username, payload.Username)
-	assert.Equal(t, response.Data.IsActive, false)
-	return &response.Data
+	return response
 }
 
 func (suite *UserPosterFlowSuite) activateUser(token string) {
