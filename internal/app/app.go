@@ -38,8 +38,11 @@ func (app *Application) Mount() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"http://localhost:7777/*"},
-		// AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedOrigins: []string{
+			"http://localhost:7777", "http://localhost:3000",
+			"https://localhost:7777", "https://localhost:3000",
+		},
+		//AllowedOrigins: []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
