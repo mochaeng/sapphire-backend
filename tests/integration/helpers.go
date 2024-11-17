@@ -40,8 +40,8 @@ var (
 )
 
 func createNewAppSuite(db *sql.DB, parsedRedisConnStr string) (*app.Application, error) {
-	// logger := zap.NewNop().Sugar()
-	logger := zap.Must(zap.NewProduction()).Sugar()
+	logger := zap.NewNop().Sugar()
+	// logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
 
 	cfg := &config.Cfg{

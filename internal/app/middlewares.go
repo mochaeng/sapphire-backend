@@ -17,6 +17,8 @@ type postKey string
 type userKey string
 
 const (
+	authTokenKey = "auth-token"
+
 	postCtx postKey = "post"
 	userCtx userKey = "user"
 )
@@ -97,17 +99,13 @@ func (app *Application) basicAuthMiddleware(next http.Handler) http.Handler {
 
 func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			app.UnauthorizedErrorResponse(w, r, ErrAuthorizationHeaderMissing)
+		cookie, err := r.Cookie(authTokenKey)
+		if err != nil {
+			app.UnauthorizedErrorResponse(w, r, err)
 			return
 		}
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			app.UnauthorizedErrorResponse(w, r, ErrAuthorizationHeaderMalformed)
-			return
-		}
-		jwtToken, err := app.Service.Auth.ValidateToken(parts[1])
+
+		jwtToken, err := app.Service.Auth.ValidateToken(cookie.Value)
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return

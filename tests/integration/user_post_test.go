@@ -9,6 +9,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -83,7 +84,6 @@ func (suite *UserPosterFlowSuite) TestMainFlow() {
 	userPayload := &models.RegisterUserPayload{
 		Username:  "gaga77",
 		FirstName: "Lady",
-		LastName:  "Gaga",
 		Email:     "gaga@jype.com",
 		Password:  "password123",
 	}
@@ -92,16 +92,21 @@ func (suite *UserPosterFlowSuite) TestMainFlow() {
 	assert.Equal(t, response.Data.IsActive, false)
 
 	suite.activateUser(response.Data.Token)
-	jwtToken := suite.generateUserToken(userPayload.Email, userPayload.Password)
+	responseWithCookie := suite.generateUserToken(userPayload.Email, userPayload.Password)
+
+	cookies := responseWithCookie.Result().Cookies()
+	require.Len(t, cookies, 1)
+	cookie := cookies[0]
+	require.Equal(t, "auth-token", cookie.Name)
 
 	suite.makePost(
-		jwtToken,
+		cookie,
 		"tittle post",
 		"this is a test using form-data",
 		[]string{"integration", "test", "learning"},
 	)
 	suite.makePost(
-		jwtToken,
+		cookie,
 		"My second post",
 		"Hallo everyone. Nice to meet yall",
 		[]string{"first poster", "friendly"},
@@ -114,7 +119,6 @@ func (suite *UserPosterFlowSuite) TestUserUniqueness() {
 	userPayload := &models.RegisterUserPayload{
 		Username:  "chae77",
 		FirstName: "son",
-		LastName:  "chaeyoung",
 		Email:     "chaechae@jype.com",
 		Password:  "password123",
 	}
@@ -126,7 +130,6 @@ func (suite *UserPosterFlowSuite) TestUserUniqueness() {
 	userSameEmailPayload := &models.RegisterUserPayload{
 		Username:  "aya",
 		FirstName: "aya",
-		LastName:  "son",
 		Email:     "chaechae@jype.com",
 		Password:  "password123",
 	}
@@ -136,7 +139,6 @@ func (suite *UserPosterFlowSuite) TestUserUniqueness() {
 	userSameUsernamePayload := &models.RegisterUserPayload{
 		Username:  "chae77",
 		FirstName: "eva",
-		LastName:  "krauser",
 		Email:     "eva@jype.com",
 		Password:  "password123",
 	}
@@ -173,7 +175,7 @@ func (suite *UserPosterFlowSuite) activateUser(token string) {
 	assert.Equal(t, http.StatusNoContent, rr.Code)
 }
 
-func (suite *UserPosterFlowSuite) generateUserToken(email string, password string) string {
+func (suite *UserPosterFlowSuite) generateUserToken(email string, password string) *httptest.ResponseRecorder {
 	t := suite.T()
 	payload := models.CreateUserTokenPayload{
 		Email:    email,
@@ -185,16 +187,10 @@ func (suite *UserPosterFlowSuite) generateUserToken(email string, password strin
 	require.NoError(t, err, ErrRequestHTTP)
 	rr := testutils.ExecuteRequest(req, suite.mux)
 	assert.Equal(t, http.StatusCreated, rr.Code)
-
-	var response struct {
-		Data models.CreateTokenResponse `json:"data"`
-	}
-	err = json.NewDecoder(rr.Body).Decode(&response)
-	require.NoError(t, err, ErrResponseParse)
-	return response.Data.Token
+	return rr
 }
 
-func (suite *UserPosterFlowSuite) makePost(jwtToken, tittle, content string, tags []string) {
+func (suite *UserPosterFlowSuite) makePost(cookie *http.Cookie, tittle, content string, tags []string) {
 	t := suite.T()
 
 	body := &bytes.Buffer{}
@@ -209,7 +205,7 @@ func (suite *UserPosterFlowSuite) makePost(jwtToken, tittle, content string, tag
 	req, err := http.NewRequest(http.MethodPost, "/v1/post/", body)
 	require.NoError(t, err, ErrRequestHTTP)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", jwtToken))
+	req.AddCookie(cookie)
 
 	rr := testutils.ExecuteRequest(req, suite.mux)
 	var resp struct {

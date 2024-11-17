@@ -14,10 +14,10 @@ insert into role (name, level, description) values ('admin', 3, 'An admin can do
 create table if not exists "user"(
     id bigserial primary key,
     first_name varchar(255) not null,
-    last_name varchar(255) not null,
+    last_name varchar(255),
     email citext unique not null,
     username citext unique not null,
-    password bytea not null,
+    password_hash bytea not null,
     is_active boolean not null default false,
     role_id int not null,
     created_at timestamp(0) with time zone not null default now(),

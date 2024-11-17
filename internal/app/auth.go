@@ -19,6 +19,7 @@ import (
 //	@Param			payload	body		models.RegisterUserPayload	true	"User credentials"
 //	@Success		201		{object}	models.RegisterUserResponse	"User registered"
 //	@Failure		400		{object}	error
+//	@Failure		409		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/auth/register/user [post]
 func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,8 +36,6 @@ func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 			app.BadRequestResponse(w, r, err)
 		case store.ErrDuplicateEmail, store.ErrDuplicateUsername:
 			app.ConflictResponse(w, r, err)
-		case store.ErrNotFound:
-			app.NotFoundResponse(w, r, err)
 		default:
 			app.InternalServerErrorResponse(w, r, err)
 		}
@@ -84,6 +83,18 @@ func (app *Application) createUserTokenHandler(w http.ResponseWriter, r *http.Re
 		}
 		return
 	}
+
+	cookie := http.Cookie{
+		Name:     authTokenKey,
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		MaxAge:   900,
+		// Domain:   string,
+		SameSite: http.SameSiteStrictMode,
+	}
+	http.SetCookie(w, &cookie)
 
 	response := models.CreateTokenResponse{
 		Token: token,

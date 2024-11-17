@@ -39,7 +39,6 @@ func (s *AuthService) RegisterUser(ctx context.Context, payload *models.Register
 		Username:  payload.Username,
 		Email:     payload.Email,
 		FirstName: payload.FirstName,
-		LastName:  payload.LastName,
 		Role: models.Role{
 			ID: config.Roles["user"].ID,
 		},

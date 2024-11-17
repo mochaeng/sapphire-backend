@@ -59,7 +59,6 @@ type RegisterUserPayload struct {
 	Email     string `json:"email" validate:"required,email,max=255"`
 	Password  string `json:"password" validate:"required,min=3,max=72"`
 	FirstName string `json:"first_name" validate:"required,min=2,max=30"`
-	LastName  string `json:"last_name" validate:"max=30"`
 }
 
 type RegisterUserResponse struct {
