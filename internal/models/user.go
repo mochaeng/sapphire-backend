@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -16,19 +14,6 @@ type User struct {
 	CreatedAt string
 	IsActive  bool
 	Role      Role
-}
-
-type password struct {
-	Hash []byte
-}
-
-func (p *password) Set(text string) error {
-	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	p.Hash = hash
-	return nil
 }
 
 type UserInvitation struct {

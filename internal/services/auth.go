@@ -99,6 +99,10 @@ func (s *AuthService) CreateUserToken(ctx context.Context, payload *models.Creat
 		return "", err
 	}
 
+	if err := user.Password.Compare(payload.Password); err != nil {
+		return "", store.ErrNotFound
+	}
+
 	token, err := s.authenticator.GenerateToken(user.ID)
 	if err != nil {
 		s.logger.Warnw("could not generate user token", "error", err)
