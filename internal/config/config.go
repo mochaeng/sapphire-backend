@@ -36,6 +36,7 @@ var (
 
 type Cfg struct {
 	Addr        string
+	AppName     string
 	DbConfig    DbCfg
 	Version     string
 	MediaFolder string
@@ -46,6 +47,7 @@ type Cfg struct {
 	RateLimiter RateLimiterConfig
 	Env         string
 	FrontedURL  string
+	ApiBasePath string
 }
 
 type DbCfg struct {

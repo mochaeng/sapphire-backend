@@ -9,17 +9,17 @@ migration:
 
 .PHONY: migrate-up
 migrate-up:
-	@migrate -database $(DATABASE_ADDR) -path $(MIGRATIONS_PATH) up
+	@migrate -database $(DATABASE_URL) -path $(MIGRATIONS_PATH) up
 
 .PHONY: migrate-down
 migrate-down:
-	@migrate -database $(DATABASE_ADDR) -path $(MIGRATIONS_PATH) down $(filter-out $@,$(MAKECMDGOALS))
+	@migrate -database $(DATABASE_URL) -path $(MIGRATIONS_PATH) down $(filter-out $@,$(MAKECMDGOALS))
 
 # If e.g, migration 15 is dirty, you can go back
 # to migration 14 with 'force-migration 14'
 .PHONY: force-migration
 force-migration:
-	@migrate -path $(MIGRATIONS_PATH) -database $(DATABASE_ADDR) force $(filter-out $@,$(MAKECMDGOALS))
+	@migrate -path $(MIGRATIONS_PATH) -database $(DATABASE_URL) force $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: seed
 seed:

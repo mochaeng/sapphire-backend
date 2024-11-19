@@ -56,10 +56,11 @@ func main() {
 	}
 
 	cfg := &config.Cfg{
-		Addr: env.GetString("ADDR", ":7777"),
+		Addr:    env.GetString("ADDR", ":7777"),
+		AppName: "Sapphire",
 		DbConfig: config.DbCfg{
 			Addr: env.GetString(
-				"DATABASE_ADDR",
+				"DATABASE_URL",
 				"postgres://hutao:adminpassword@localhost:8888/limerence?sslmode=disable",
 			),
 			MaxOpenConns:       env.GetInt("DATABASE_MAX_OPEN_CONNS", 30),
@@ -78,7 +79,7 @@ func main() {
 		Version:     "0.0.1",
 		MediaFolder: "data",
 		ApiURL:      env.GetString("EXTERNAL_URL", "localhost:7777"),
-		FrontedURL:  env.GetString("FRONTED_URL", "http://localhost:3000"),
+		FrontedURL:  env.GetString("FRONTED_URL", "http://localhost:5173"),
 		Mail: config.MailCfg{
 			Expired:   24 * time.Hour,
 			FromEmail: env.GetString("FROM_EMAIL", ""),
