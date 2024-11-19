@@ -1,4 +1,4 @@
-package service
+package services
 
 import (
 	"context"
@@ -34,6 +34,12 @@ type Service struct {
 		CreateUserToken(ctx context.Context, payload *models.CreateUserTokenPayload) (string, error)
 		ValidateToken(token string) (*jwt.Token, error)
 	}
+	Session interface {
+		GenerateSessionToken() (string, error)
+		CreateSession(token string, userID int64) (*models.Session, error)
+		ValidateSessionToken(token string) (*models.Session, error)
+		InvalidateSession(sessionID string) error
+	}
 	Feed interface {
 		Get(ctx context.Context, userID int64, feedQuery *models.PaginateFeedQuery) ([]*models.PostWithMetadata, error)
 	}
@@ -58,6 +64,11 @@ func NewServices(serviceCfg *config.ServiceCfg) *Service {
 			serviceCfg.Mailer,
 			serviceCfg.Authenticator,
 			serviceCfg.Logger,
+		},
+		Session: &SessionService{
+			store:  serviceCfg.Store,
+			cfg:    serviceCfg.Cfg,
+			logger: serviceCfg.Logger,
 		},
 	}
 }

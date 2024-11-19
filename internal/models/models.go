@@ -1,6 +1,10 @@
 package models
 
-import "github.com/go-playground/validator/v10"
+import (
+	"time"
+
+	"github.com/go-playground/validator/v10"
+)
 
 var Validate *validator.Validate
 
@@ -27,6 +31,12 @@ type Comment struct {
 	Content   string      `json:"content"`
 	CreatedAt string      `json:"created_at"`
 	User      UserComment `json:"user"`
+}
+
+type Session struct {
+	ID        string    `json:"id"`
+	UserID    int64     `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type Role struct {

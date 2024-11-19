@@ -12,6 +12,7 @@ func NewPostgresStore(db *sql.DB) *store.Store {
 		User:    &UserStore{db: db},
 		Comment: &CommentStore{db: db},
 		Feed:    &FeedStore{db: db},
+		Session: &SessionStore{db: db},
 	}
 }
 

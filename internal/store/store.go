@@ -40,6 +40,12 @@ type Store struct {
 	Feed interface {
 		Get(ctx context.Context, userID int64, paginateQuery models.PaginateFeedQuery) ([]*models.PostWithMetadata, error)
 	}
+	Session interface {
+		Create(ctx context.Context, session *models.Session) error
+		Get(ctx context.Context, sessionID string) (*models.Session, error)
+		UpdateExpires(ctx context.Context, session *models.Session) error
+		Delete(ctx context.Context, sessionID string) error
+	}
 	Comment interface {
 		GetByPostID(context.Context, int64) (*[]models.Comment, error)
 		Create(context.Context, *models.Comment) error
