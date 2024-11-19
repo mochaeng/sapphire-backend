@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
 	"github.com/mochaeng/sapphire-backend/internal/models"
@@ -21,7 +22,7 @@ import (
 //	@Failure		400		{object}	error
 //	@Failure		409		{object}	error
 //	@Failure		500		{object}	error
-//	@Router			/auth/register/user [post]
+//	@Router			/auth/signup [post]
 func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload models.RegisterUserPayload
 	if err := httpio.ReadJSON(w, r, &payload); err != nil {
@@ -53,10 +54,10 @@ func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-// CreateUserToken godoc
+// SiginHandler godoc
 //
-//	@Summary		Creates a token for a activated user
-//	@Description	This token is used for a user to access protected routes
+//	@Summary		Signs user in the application
+//	@Description
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
@@ -65,15 +66,15 @@ func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
-//	@Router			/auth/token [post]
-func (app *Application) createUserTokenHandler(w http.ResponseWriter, r *http.Request) {
-	var payload models.CreateUserTokenPayload
+//	@Router			/auth/signin [post]
+func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
+	var payload models.SigninPayload
 	if err := httpio.ReadJSON(w, r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
 
-	token, err := app.Service.Auth.CreateUserToken(r.Context(), &payload)
+	user, err := app.Service.Auth.Authenticate(r.Context(), &payload)
 	if err != nil {
 		switch err {
 		case store.ErrNotFound:
@@ -84,15 +85,26 @@ func (app *Application) createUserTokenHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	token, err := app.Service.Session.GenerateSessionToken()
+	if err != nil {
+		app.InternalServerErrorResponse(w, r, err)
+		return
+	}
+
+	session, err := app.Service.Session.CreateSession(token, user.ID)
+	if err != nil {
+		app.InternalServerErrorResponse(w, r, err)
+		return
+	}
+
 	cookie := http.Cookie{
 		Name:     authTokenKey,
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		MaxAge:   900,
-		// Domain:   string,
-		SameSite: http.SameSiteStrictMode,
+		MaxAge:   int(session.ExpiresAt.Sub(time.Now()).Seconds()),
+		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(w, &cookie)
 

@@ -53,7 +53,7 @@ type RegisterUserResponse struct {
 	Token     string `json:"token"`
 }
 
-type CreateUserTokenPayload struct {
+type SigninPayload struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=3,max=72"`
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
 
@@ -17,7 +16,7 @@ type postKey string
 type userKey string
 
 const (
-	authTokenKey = "auth-token"
+	authTokenKey = "session-id"
 
 	postCtx postKey = "post"
 	userCtx userKey = "user"
@@ -105,19 +104,20 @@ func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		jwtToken, err := app.Service.Auth.ValidateToken(cookie.Value)
+		token := cookie.Value
+		if len(token) == 0 {
+			app.UnauthorizedErrorResponse(w, r, err)
+			return
+		}
+
+		session, err := app.Service.Session.ValidateSessionToken(cookie.Value)
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return
 		}
-		claims := jwtToken.Claims.(jwt.MapClaims)
-		userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["sub"]), 10, 64)
-		if err != nil {
-			app.UnauthorizedErrorResponse(w, r, err)
-			return
-		}
+
 		ctx := r.Context()
-		user, err := app.Service.User.GetCached(ctx, userID)
+		user, err := app.Service.User.GetCached(ctx, session.UserID)
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return

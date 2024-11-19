@@ -89,26 +89,21 @@ func (s *AuthService) RegisterUser(ctx context.Context, payload *models.Register
 	return userInvitation, nil
 }
 
-func (s *AuthService) CreateUserToken(ctx context.Context, payload *models.CreateUserTokenPayload) (string, error) {
+func (s *AuthService) Authenticate(ctx context.Context, payload *models.SigninPayload) (*models.User, error) {
 	if err := models.Validate.Struct(payload); err != nil {
-		return "", ErrInvalidPayload
+		return nil, ErrInvalidPayload
 	}
 
 	user, err := s.store.User.GetByEmail(ctx, payload.Email)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if err := user.Password.Compare(payload.Password); err != nil {
-		return "", store.ErrNotFound
+		return nil, store.ErrNotFound
 	}
 
-	token, err := s.authenticator.GenerateToken(user.ID)
-	if err != nil {
-		s.logger.Warnw("could not generate user token", "error", err)
-		return "", ErrUserTokeCreation
-	}
-	return token, nil
+	return user, nil
 }
 
 func (s *AuthService) ValidateToken(token string) (*jwt.Token, error) {

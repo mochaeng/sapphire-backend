@@ -31,7 +31,7 @@ type Service struct {
 	}
 	Auth interface {
 		RegisterUser(ctx context.Context, payload *models.RegisterUserPayload) (*models.UserInvitation, error)
-		CreateUserToken(ctx context.Context, payload *models.CreateUserTokenPayload) (string, error)
+		Authenticate(ctx context.Context, payload *models.SigninPayload) (*models.User, error)
 		ValidateToken(token string) (*jwt.Token, error)
 	}
 	Session interface {

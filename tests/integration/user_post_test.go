@@ -177,7 +177,7 @@ func (suite *UserPosterFlowSuite) activateUser(token string) {
 
 func (suite *UserPosterFlowSuite) generateUserToken(email string, password string) *httptest.ResponseRecorder {
 	t := suite.T()
-	payload := models.CreateUserTokenPayload{
+	payload := models.SigninPayload{
 		Email:    email,
 		Password: password,
 	}
