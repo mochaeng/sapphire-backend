@@ -3,7 +3,6 @@ package config
 import (
 	"time"
 
-	"github.com/mochaeng/sapphire-backend/internal/auth"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"github.com/mochaeng/sapphire-backend/internal/store/cache"
@@ -58,12 +57,11 @@ type DbCfg struct {
 }
 
 type ServiceCfg struct {
-	Logger        *zap.SugaredLogger
-	Store         *store.Store
-	CacheStore    *cache.Store
-	Cfg           *Cfg
-	Mailer        mailer.Client
-	Authenticator auth.Authenticator
+	Logger     *zap.SugaredLogger
+	Store      *store.Store
+	CacheStore *cache.Store
+	Cfg        *Cfg
+	Mailer     mailer.Client
 }
 
 type CacheCfg struct {

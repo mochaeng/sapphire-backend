@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 )
@@ -32,9 +31,6 @@ type Service struct {
 	Auth interface {
 		RegisterUser(ctx context.Context, payload *models.RegisterUserPayload) (*models.UserInvitation, error)
 		Authenticate(ctx context.Context, payload *models.SigninPayload) (*models.User, error)
-		ValidateToken(token string) (*jwt.Token, error)
-	}
-	Session interface {
 		GenerateSessionToken() (string, error)
 		CreateSession(token string, userID int64) (*models.Session, error)
 		ValidateSessionToken(token string) (*models.Session, error)
@@ -62,13 +58,7 @@ func NewServices(serviceCfg *config.ServiceCfg) *Service {
 			serviceCfg.Store,
 			serviceCfg.Cfg,
 			serviceCfg.Mailer,
-			serviceCfg.Authenticator,
 			serviceCfg.Logger,
-		},
-		Session: &SessionService{
-			store:  serviceCfg.Store,
-			cfg:    serviceCfg.Cfg,
-			logger: serviceCfg.Logger,
 		},
 	}
 }

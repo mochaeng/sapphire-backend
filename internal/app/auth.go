@@ -85,13 +85,13 @@ func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := app.Service.Session.GenerateSessionToken()
+	token, err := app.Service.Auth.GenerateSessionToken()
 	if err != nil {
 		app.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	session, err := app.Service.Session.CreateSession(token, user.ID)
+	session, err := app.Service.Auth.CreateSession(token, user.ID)
 	if err != nil {
 		app.InternalServerErrorResponse(w, r, err)
 		return

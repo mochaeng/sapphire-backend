@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/app"
-	"github.com/mochaeng/sapphire-backend/internal/auth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
 	"github.com/mochaeng/sapphire-backend/internal/models"
@@ -85,20 +84,12 @@ func createNewAppSuite(db *sql.DB, parsedRedisConnStr string) (*app.Application,
 		return nil, fmt.Errorf("could not create mailer, err: %s", err)
 	}
 
-	jwtAuthenticator := auth.NewJWTAuthenticator(
-		cfg.Auth.Token.Secret,
-		cfg.Auth.Token.Issuer,
-		cfg.Auth.Token.Issuer,
-		cfg.Auth.Token.Expired,
-	)
-
 	servicesCfg := &config.ServiceCfg{
-		Logger:        logger,
-		Store:         store,
-		Cfg:           cfg,
-		Mailer:        clientMailer,
-		Authenticator: jwtAuthenticator,
-		CacheStore:    cacheStore,
+		Logger:     logger,
+		Store:      store,
+		Cfg:        cfg,
+		Mailer:     clientMailer,
+		CacheStore: cacheStore,
 	}
 	services := service.NewServices(servicesCfg)
 

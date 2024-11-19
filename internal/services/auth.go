@@ -6,16 +6,18 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/mochaeng/sapphire-backend/internal/auth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
+	"github.com/mochaeng/sapphire-backend/internal/cryptoutils"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"go.uber.org/zap"
 )
+
+const sessionExpiresIn = 30 * 24 * time.Hour
 
 var (
 	ErrSetPasswordHash  = errors.New("could not set password hash")
@@ -24,11 +26,10 @@ var (
 )
 
 type AuthService struct {
-	store         *store.Store
-	cfg           *config.Cfg
-	mailer        mailer.Client
-	authenticator auth.Authenticator
-	logger        *zap.SugaredLogger
+	store  *store.Store
+	cfg    *config.Cfg
+	mailer mailer.Client
+	logger *zap.SugaredLogger
 }
 
 func (s *AuthService) RegisterUser(ctx context.Context, payload *models.RegisterUserPayload) (*models.UserInvitation, error) {
@@ -102,10 +103,56 @@ func (s *AuthService) Authenticate(ctx context.Context, payload *models.SigninPa
 	if err := user.Password.Compare(payload.Password); err != nil {
 		return nil, store.ErrNotFound
 	}
-
 	return user, nil
 }
 
-func (s *AuthService) ValidateToken(token string) (*jwt.Token, error) {
-	return s.authenticator.ValidateToken(token)
+func (s *AuthService) GenerateSessionToken() (string, error) {
+	return cryptoutils.GenerateRandomString(20)
+}
+
+func (s *AuthService) CreateSession(token string, userID int64) (*models.Session, error) {
+	sessionID := cryptoutils.GetSessionID(token)
+	expiresAt := time.Now().Add(sessionExpiresIn)
+	session := models.Session{
+		ID:        sessionID,
+		UserID:    userID,
+		ExpiresAt: expiresAt,
+	}
+
+	err := s.store.Session.Create(context.Background(), &session)
+	if err != nil {
+		return nil, err
+	}
+	return &session, nil
+}
+
+func (s *AuthService) ValidateSessionToken(token string) (*models.Session, error) {
+	sessionID := cryptoutils.GetSessionID(token)
+	ctx := context.Background()
+
+	session, err := s.store.Session.Get(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Now().After(session.ExpiresAt) {
+		err := s.store.Session.Delete(ctx, session.ID)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+	if time.Now().After(session.ExpiresAt.Add(-sessionExpiresIn / 2)) {
+		session.ExpiresAt = time.Now().Add(sessionExpiresIn)
+		_ = s.store.Session.UpdateExpires(ctx, session)
+	}
+	return session, nil
+}
+
+func (s *AuthService) InvalidateSession(sessionID string) error {
+	err := s.store.Session.Delete(context.Background(), sessionID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

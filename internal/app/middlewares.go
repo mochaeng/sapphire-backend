@@ -110,7 +110,7 @@ func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		session, err := app.Service.Session.ValidateSessionToken(cookie.Value)
+		session, err := app.Service.Auth.ValidateSessionToken(cookie.Value)
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return

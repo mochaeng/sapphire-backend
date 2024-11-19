@@ -13,7 +13,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
 	"github.com/mochaeng/sapphire-backend/internal/app"
-	"github.com/mochaeng/sapphire-backend/internal/auth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/database"
 	"github.com/mochaeng/sapphire-backend/internal/env"
@@ -156,25 +155,17 @@ func main() {
 		logger.Panicw("could not create mailer", "error", err)
 	}
 
-	jwtAuthenticator := auth.NewJWTAuthenticator(
-		cfg.Auth.Token.Secret,
-		cfg.Auth.Token.Issuer,
-		cfg.Auth.Token.Issuer,
-		cfg.Auth.Token.Expired,
-	)
-
 	rateLimiter := ratelimiter.NewFixedWindowLimiter(
 		cfg.RateLimiter.RequestPerTimeFrame,
 		cfg.RateLimiter.TimeFrame,
 	)
 
 	serviceCfg := config.ServiceCfg{
-		Logger:        logger,
-		Store:         store,
-		Cfg:           cfg,
-		Mailer:        clientMailer,
-		Authenticator: jwtAuthenticator,
-		CacheStore:    cacheStore,
+		Logger:     logger,
+		Store:      store,
+		Cfg:        cfg,
+		Mailer:     clientMailer,
+		CacheStore: cacheStore,
 	}
 	services := service.NewServices(&serviceCfg)
 
