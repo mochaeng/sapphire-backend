@@ -23,7 +23,7 @@ import (
 //	@Failure		409		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/auth/signup [post]
-func (app *Application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
+func (app *Application) signupHandler(w http.ResponseWriter, r *http.Request) {
 	var payload models.RegisterUserPayload
 	if err := httpio.ReadJSON(w, r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
@@ -98,7 +98,7 @@ func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := http.Cookie{
-		Name:     authTokenKey,
+		Name:     AuthTokenKey,
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,

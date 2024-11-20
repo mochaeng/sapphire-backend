@@ -173,7 +173,7 @@ func (app *Application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 //	@Success		204		{string}	string	"User activated"
 //	@Failure		404		{object}	error
 //	@Failure		500		{object}	error
-//	@Router			/user/activate/{token} [put]
+//	@Router			/verify-email/{token} [put]
 func (app *Application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
 	if token == "" {

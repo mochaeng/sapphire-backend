@@ -64,7 +64,6 @@ func (app *Application) Mount() http.Handler {
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		r.Route("/user", func(r chi.Router) {
-			r.Put("/activate/{token}", app.activateUserHandler)
 			r.Route("/{userID}", func(r chi.Router) {
 				r.With(app.userContextMiddleware).Get("/", app.getUserHandler)
 				r.Group(func(r chi.Router) {
@@ -93,9 +92,13 @@ func (app *Application) Mount() http.Handler {
 		})
 
 		r.Route("/auth", func(r chi.Router) {
-			r.Post("/signup", app.registerUserHandler)
+			r.Post("/signup", app.signupHandler)
 			r.Post("/signin", app.signinHandler)
 			// r.Post("/logout", h http.HandlerFunc)
+		})
+
+		r.Route("/verify-email", func(r chi.Router) {
+			r.Put("/{token}", app.activateUserHandler)
 		})
 	})
 
