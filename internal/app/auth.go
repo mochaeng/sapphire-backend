@@ -103,7 +103,7 @@ func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
-		MaxAge:   int(session.ExpiresAt.Sub(time.Now()).Seconds()),
+		MaxAge:   int(time.Until(session.ExpiresAt).Seconds()),
 		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(w, &cookie)
