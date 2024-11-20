@@ -16,7 +16,7 @@ type postKey string
 type userKey string
 
 const (
-	authTokenKey = "session-id"
+	AuthTokenKey = "session-id"
 
 	postCtx postKey = "post"
 	userCtx userKey = "user"
@@ -98,7 +98,7 @@ func (app *Application) basicAuthMiddleware(next http.Handler) http.Handler {
 
 func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(authTokenKey)
+		cookie, err := r.Cookie(AuthTokenKey)
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return

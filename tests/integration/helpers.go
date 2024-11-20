@@ -1,11 +1,16 @@
 package integration
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"testing"
 	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/app"
@@ -16,7 +21,10 @@ import (
 	service "github.com/mochaeng/sapphire-backend/internal/services"
 	redisstore "github.com/mochaeng/sapphire-backend/internal/store/cache/redis"
 	"github.com/mochaeng/sapphire-backend/internal/store/postgres"
+	"github.com/mochaeng/sapphire-backend/internal/testutils"
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -105,4 +113,65 @@ func createNewAppSuite(db *sql.DB, parsedRedisConnStr string) (*app.Application,
 		RateLimiter: ratelimiter,
 	}
 	return app, nil
+}
+
+func registerUser(t *testing.T, mux http.Handler, payload *models.RegisterUserPayload) RegisterUserResponse {
+	jsonData, err := json.Marshal(payload)
+	require.NoError(t, err, ErrPayloadMarshal)
+
+	req, err := http.NewRequest(http.MethodPost, signupRouter, bytes.NewReader(jsonData))
+	require.NoError(t, err, ErrRequestHTTP)
+
+	rr := testutils.ExecuteRequest(req, mux)
+
+	response := RegisterUserResponse{rr: rr}
+	err = json.NewDecoder(rr.Body).Decode(&response)
+	require.NoError(t, err)
+	return response
+}
+
+func makePost(t *testing.T, mux http.Handler, cookie *http.Cookie, tittle, content string, tags []string) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	writer.WriteField("tittle", tittle)
+	writer.WriteField("content", content)
+	for _, tag := range tags {
+		writer.WriteField("tags", tag)
+	}
+	writer.Close()
+
+	req, err := http.NewRequest(http.MethodPost, "/v1/post/", body)
+	require.NoError(t, err, ErrRequestHTTP)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.AddCookie(cookie)
+
+	rr := testutils.ExecuteRequest(req, mux)
+	var resp struct {
+		Data models.CreatePostResponse `json:"data"`
+	}
+	err = json.NewDecoder(rr.Body).Decode(&resp)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, rr.Code)
+}
+
+func activateUser(t *testing.T, mux http.Handler, token string) {
+	activationURL := fmt.Sprintf("%s%s", activateRouter, token)
+	req, err := http.NewRequest(http.MethodPut, activationURL, nil)
+	require.NoError(t, err, ErrRequestHTTP)
+	rr := testutils.ExecuteRequest(req, mux)
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+}
+
+func signinUser(t *testing.T, mux http.Handler, email string, password string) *httptest.ResponseRecorder {
+	payload := models.SigninPayload{
+		Email:    email,
+		Password: password,
+	}
+	jsonData, err := json.Marshal(payload)
+	require.NoError(t, err, ErrPayloadMarshal)
+	req, err := http.NewRequest(http.MethodPost, signinRouter, bytes.NewReader(jsonData))
+	require.NoError(t, err, ErrRequestHTTP)
+	rr := testutils.ExecuteRequest(req, mux)
+	assert.Equal(t, http.StatusCreated, rr.Code)
+	return rr
 }
