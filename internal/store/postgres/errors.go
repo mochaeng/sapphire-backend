@@ -48,3 +48,13 @@ func errorPostTransform(err error) error {
 	}
 	return nil
 }
+
+func errorSessionTransform(err error) error {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return store.ErrNotFound
+		}
+		return err
+	}
+	return nil
+}

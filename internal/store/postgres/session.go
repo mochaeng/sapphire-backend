@@ -49,7 +49,7 @@ func (s *SessionStore) Get(ctx context.Context, sessionID string) (*models.Sessi
 		&session.ExpiresAt,
 	)
 	if err != nil {
-		return nil, err
+		errorSessionTransform(err)
 	}
 	return &session, nil
 }
@@ -63,7 +63,7 @@ func (s *SessionStore) UpdateExpires(ctx context.Context, session *models.Sessio
 	`
 	err := s.db.QueryRowContext(ctx, query, session.ExpiresAt, session.ID).Scan(&session.UserID)
 	if err != nil {
-		return err
+		return errorSessionTransform(err)
 	}
 	return nil
 }

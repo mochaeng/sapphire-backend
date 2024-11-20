@@ -51,6 +51,7 @@ func (app *Application) Mount() http.Handler {
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+	r.Use(app.csrfMiddleware)
 	if app.Config.RateLimiter.IsEnable {
 		r.Use(app.rateLimiterMiddleware)
 	}

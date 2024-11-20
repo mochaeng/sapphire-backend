@@ -25,6 +25,22 @@ create table if not exists "user"(
     constraint fk_role foreign key (role_id) references "role"(id)
 );
 
+create table if not exists "user_session" (
+    id text not null primary key,
+    user_id integer not null,
+    expires_at timestamptz not null,
+
+    constraint fk_user_id foreign key (user_id) references "user"(id)
+);
+
+create table if not exists "oauth_account" (
+	"provider_id" text not null,
+	"provider_user_id" text not null,
+	"user_id" text not null,
+
+	constraint "oauth_account_provider_id_provider_user_id_pk" primary key("provider_id","provider_user_id")
+);
+
 create table if not exists "post"(
     id bigserial primary key,
     tittle text not null,

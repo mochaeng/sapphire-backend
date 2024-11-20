@@ -23,6 +23,8 @@ var (
 	ErrSetPasswordHash  = errors.New("could not set password hash")
 	ErrEmailSending     = errors.New("could not send e-mail")
 	ErrUserTokeCreation = errors.New("could not create user token")
+
+	ErrInvalidSession = errors.New("user session is invalid")
 )
 
 type AuthService struct {
@@ -132,7 +134,7 @@ func (s *AuthService) ValidateSessionToken(token string) (*models.Session, error
 
 	session, err := s.store.Session.Get(ctx, sessionID)
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidSession
 	}
 
 	if time.Now().After(session.ExpiresAt) {

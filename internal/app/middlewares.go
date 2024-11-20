@@ -113,6 +113,7 @@ func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 		session, err := app.Service.Auth.ValidateSessionToken(cookie.Value)
 		if err != nil {
 			app.UnauthorizedErrorResponse(w, r, err)
+			deleteCookie(w, cookie.Name)
 			return
 		}
 
@@ -148,6 +149,23 @@ func (app *Application) rateLimiterMiddleware(next http.Handler) http.Handler {
 		if app.Config.RateLimiter.IsEnable {
 			if allow, retryAfter := app.RateLimiter.Allow(r.RemoteAddr); !allow {
 				app.RateLimitExceededResponse(w, r, retryAfter.String())
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *Application) csrfMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if app.Config.Env == "dev" {
+			next.ServeHTTP(w, r)
+		}
+		if r.Method != http.MethodGet {
+			origin := r.Header.Get("Origin")
+			if origin == "" || origin != app.Config.FrontedURL {
+				app.Logger.Info("theres no way we are here?", "origin", origin)
+				app.ForbiddenErrorResponse(w, r, ErrInvalidOrigin)
 				return
 			}
 		}
