@@ -14,12 +14,14 @@ import (
 
 type postKey string
 type userKey string
+type sessionKey string
 
 const (
 	AuthTokenKey = "session-id"
 
-	postCtx postKey = "post"
-	userCtx userKey = "user"
+	postCtx    postKey    = "post"
+	userCtx    userKey    = "user"
+	sessionCtx sessionKey = "session"
 )
 
 func (app *Application) postContextMiddleware(next http.Handler) http.Handler {
@@ -99,21 +101,15 @@ func (app *Application) basicAuthMiddleware(next http.Handler) http.Handler {
 func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(AuthTokenKey)
-		if err != nil {
-			app.UnauthorizedErrorResponse(w, r, err)
-			return
-		}
-
-		token := cookie.Value
-		if len(token) == 0 {
-			app.UnauthorizedErrorResponse(w, r, err)
+		if err != nil || len(cookie.Value) == 0 {
+			app.UnauthorizedErrorResponse(w, r, ErrMissingOrEmptyAuthToken)
 			return
 		}
 
 		session, err := app.Service.Auth.ValidateSessionToken(cookie.Value)
 		if err != nil {
-			app.UnauthorizedErrorResponse(w, r, err)
-			deleteCookie(w, cookie.Name)
+			app.UnauthorizedErrorResponse(w, r, ErrInvalidUserSession)
+			app.deleteUserSessionCookie(w)
 			return
 		}
 
@@ -123,7 +119,9 @@ func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 			app.UnauthorizedErrorResponse(w, r, err)
 			return
 		}
+
 		ctx = context.WithValue(ctx, userCtx, user)
+		ctx = context.WithValue(ctx, sessionCtx, session)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -160,11 +158,11 @@ func (app *Application) csrfMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if app.Config.Env == "dev" {
 			next.ServeHTTP(w, r)
+			return
 		}
 		if r.Method != http.MethodGet {
 			origin := r.Header.Get("Origin")
 			if origin == "" || origin != app.Config.FrontedURL {
-				app.Logger.Info("theres no way we are here?", "origin", origin)
 				app.ForbiddenErrorResponse(w, r, ErrInvalidOrigin)
 				return
 			}

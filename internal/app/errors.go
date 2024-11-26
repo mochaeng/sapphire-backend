@@ -8,4 +8,10 @@ var (
 	ErrInvalidCredentials           = errors.New("invalid credentials")
 
 	ErrInvalidOrigin = errors.New("non get request from invalid origin")
+
+	ErrInvalidUserSession      = errors.New("user session is not valid")
+	ErrMissingOrEmptyAuthToken = errors.New("auth token is missing or is empty")
+	ErrSessionContextNotFound  = errors.New("session was not found on context")
+	ErrUserContextNotFound     = errors.New("user was not found on context")
+	ErrPostContextNotFound     = errors.New("post was not found on context")
 )

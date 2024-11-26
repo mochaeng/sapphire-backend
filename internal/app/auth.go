@@ -62,7 +62,7 @@ func (app *Application) signupHandler(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		models.CreateUserTokenPayload	true	"User credentials"
-//	@Success		201		{object}	models.CreateTokenResponse	"Token"
+//	@Success		204		"user has signin"
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
@@ -108,11 +108,55 @@ func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &cookie)
 
-	response := models.CreateTokenResponse{
-		Token: token,
+	httpio.NoContentResponse(w)
+}
+
+// SignoutHandler godoc
+//
+//	@Summary		Signouts a user from the application
+//	@Description	Invalidate the user's session and delete the HTTP-only auth token
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		204		"user session deleted"
+//	@Failure		401		{object}	error
+//	@Failure		500		{object}	error
+//	@Router			/auth/signout [post]
+func (app *Application) signoutHandler(w http.ResponseWriter, r *http.Request) {
+	session := getSessionFromContext(r)
+	if session == nil {
+		app.InternalServerErrorResponse(w, r, ErrSessionContextNotFound)
+		return
 	}
-	if err := httpio.JsonResponse(w, http.StatusCreated, response); err != nil {
+
+	err := app.Service.Auth.InvalidateSession(session.ID)
+	if err != nil {
 		app.InternalServerErrorResponse(w, r, err)
 		return
 	}
+
+	app.deleteUserSessionCookie(w)
+
+	httpio.NoContentResponse(w)
+}
+
+// AuthStatusHandler godoc
+//
+//	@Summary		Check the auth status of a user
+//	@Description	Check if the session token set with HTTPOnly by the backend is valid
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		204		"user is authenticated"
+//	@Failure		401		{object}	error
+//	@Failure		500		{object}	error
+//	@Router			/auth/status [get]
+func (app *Application) authStatusHandler(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromContext(r)
+	if user == nil {
+		app.InternalServerErrorResponse(w, r, ErrUserContextNotFound)
+		return
+	}
+
+	httpio.NoContentResponse(w)
 }

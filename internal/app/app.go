@@ -48,7 +48,7 @@ func (app *Application) Mount() http.Handler {
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 	r.Use(app.csrfMiddleware)
@@ -95,7 +95,8 @@ func (app *Application) Mount() http.Handler {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/signup", app.signupHandler)
 			r.Post("/signin", app.signinHandler)
-			// r.Post("/logout", h http.HandlerFunc)
+			r.With(app.authTokenMiddleware).Post("/signout", app.signoutHandler)
+			r.With(app.authTokenMiddleware).Get("/status", app.authStatusHandler)
 		})
 
 		r.Route("/verify-email", func(r chi.Router) {

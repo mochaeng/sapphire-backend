@@ -11,11 +11,6 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
 
-func getUserFromContext(r *http.Request) *models.User {
-	user, _ := r.Context().Value(userCtx).(*models.User)
-	return user
-}
-
 // GetUser godoc
 //
 //	@Summary		Fetches a user
