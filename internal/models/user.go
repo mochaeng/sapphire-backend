@@ -61,3 +61,11 @@ type SigninPayload struct {
 type CreateTokenResponse struct {
 	Token string `json:"token"`
 }
+
+type AuthMeResponse struct {
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name,omitempty"`
+	Username  string `json:"username"`
+	RoleName  string `json:"role_name"`
+}

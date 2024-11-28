@@ -51,7 +51,7 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*models.User, er
 	defer cancel()
 	query := `
 		select
-			u.id, u.first_name, u.last_name, u.email, u.username, u.password, u.created_at, u.is_active, u.role_id, r.level
+			u.id, u.first_name, u.last_name, u.email, u.username, u.password, u.created_at, u.is_active, u.role_id, r.name, r.level
 		from "user" u
 		join "role" r on (u.role_id = r.id)
 		where u.id = $1 and u.is_active = true;
@@ -71,6 +71,7 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*models.User, er
 		&user.CreatedAt,
 		&user.IsActive,
 		&user.Role.ID,
+		&user.Role.Name,
 		&user.Role.Level,
 	)
 	if err != nil {

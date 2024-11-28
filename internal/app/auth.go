@@ -73,7 +73,6 @@ func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
-
 	user, err := app.Service.Auth.Authenticate(r.Context(), &payload)
 	if err != nil {
 		switch err {
@@ -150,7 +149,7 @@ func (app *Application) signoutHandler(w http.ResponseWriter, r *http.Request) {
 //	@Success		204		"user is authenticated"
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
-//	@Router			/auth/status [get]
+//	@Router			/auth/status [post]
 func (app *Application) authStatusHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 	if user == nil {
@@ -159,4 +158,35 @@ func (app *Application) authStatusHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	httpio.NoContentResponse(w)
+}
+
+// AuthMeHandler godoc
+//
+//	@Summary		Get authenticated user information
+//	@Description	Retrieve details about the authenticated user based on the session token set by the backend via HTTPOnly cookies.
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		200		{object}	UserResponse	"Authenticated user information"
+//	@Failure		401		{object}	error			"User is not authenticated or token is invalid"
+//	@Failure		500		{object}	error			"Internal server error"
+//	@Router			/auth/me [post]
+func (app *Application) authMeHandler(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromContext(r)
+	if user == nil {
+		app.InternalServerErrorResponse(w, r, ErrUserContextNotFound)
+		return
+	}
+
+	response := &models.AuthMeResponse{
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Username:  user.Username,
+		RoleName:  user.Role.Name,
+	}
+	if err := httpio.JsonResponse(w, http.StatusOK, response); err != nil {
+		app.InternalServerErrorResponse(w, r, err)
+		return
+	}
 }
