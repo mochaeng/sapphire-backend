@@ -21,6 +21,7 @@ type Service struct {
 		Activate(ctx context.Context, token string) error
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
 		GetCached(ctx context.Context, userID int64) (*models.User, error)
+		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
 	}
 	Post interface {
 		Create(ctx context.Context, user *models.User, payload *models.CreatePostPayload, file []byte) (*models.Post, error)

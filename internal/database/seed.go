@@ -29,6 +29,8 @@ func Seed(store *store.Store, db *sql.DB) {
 	}
 	tx.Commit()
 
+	profiles := generateProfiles(users)
+
 	posts := generatePosts(200, users)
 	for _, post := range posts {
 		if err := store.Post.Create(ctx, post); err != nil {
@@ -68,6 +70,20 @@ func generateUsers(amount int) []*models.User {
 		}
 	}
 	return users
+}
+
+func generateProfiles(users []*models.User) []*models.UserProfile {
+	profiles := make([]*models.UserProfile, len(users))
+	for i := 0; i < len(users); i++ {
+		profiles[i] = &models.UserProfile{
+			Description: profileDescriptions[rand.Intn(len(profileDescriptions))],
+			AvatarURL:   avatarURLs[rand.Intn(len(avatarURLs))],
+			BannerURL:   bannerURLs[rand.Intn(len(bannerURLs))],
+			Location:    "in your hert",
+			UserLink:    "my.website.com",
+		}
+	}
+	return profiles
 }
 
 func generatePosts(amount int, users []*models.User) []*models.Post {
@@ -222,4 +238,25 @@ var commentaries = []string{
 	"Such a great idea!", "This hit home.", "I couldn’t agree more.", "Really made me think!",
 	"Thanks for breaking this down so well.", "This just changed my perspective.", "Perfect timing on this post!",
 	"This deserves more attention!", "Yes, yes, yes! Love this!",
+}
+
+var profileDescriptions = []string{
+	"Passionate about technology, coffee, and endless learning. 🚀☕️",
+	"Explorer of ideas, lover of books, and a firm believer in kindness. 🌍📚",
+	"Sharing my journey in tech and life. Let’s connect and grow together! 🤝",
+	"Music enthusiast, foodie, and part-time adventurer. 🎶🍕🌄",
+	"Dream big, work hard, and make it happen. 💪✨",
+	"Coding my way through life, one bug at a time. 🖥️🐛",
+	"Traveler by heart, storyteller by nature. 🌎✍️",
+	"Chasing creativity, innovation, and good vibes. 🌟💡",
+	"Lover of sunsets, art, and meaningful conversations. 🌅🎨",
+	"Building connections, sharing moments, and creating memories. 🛠️📸",
+}
+
+var bannerURLs = []string{
+	"https://i.pinimg.com/736x/dc/52/7c/dc527c727f6bf1eaa25ca7ea896ad27e.jpg",
+}
+
+var avatarURLs = []string{
+	"https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fn6t768hnhr3e1.png",
 }

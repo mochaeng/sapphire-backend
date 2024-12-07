@@ -44,6 +44,11 @@ func (m *MockUserService) GetCached(ctx context.Context, userID int64) (*models.
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
+func (m *MockUserService) GetProfile(ctx context.Context, username string) (*models.UserProfile, error) {
+	args := m.Called(ctx, username)
+	return args.Get(0).(*models.UserProfile), args.Error(1)
+}
+
 type MockPostService struct {
 	mock.Mock
 }

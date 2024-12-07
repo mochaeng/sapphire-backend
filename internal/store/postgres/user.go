@@ -305,3 +305,36 @@ func (s *UserStore) getUserFromInvitationToken(ctx context.Context, tx *sql.Tx, 
 	}
 	return &user, nil
 }
+
+func (s *UserStore) GetProfile(ctx context.Context, username string) (*models.UserProfile, error) {
+	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
+	defer cancel()
+	query := `
+		select up.description, up.avatar_url, up.banner_url, up."location", up.user_link,
+			   up.created_at, up.updated_at
+		from "user" u
+		join user_profile up
+		ON u.id = up.id where username = $1
+	`
+	var profile models.UserProfile
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		username,
+	).Scan(
+		&profile.Description,
+		&profile.AvatarURL,
+		&profile.BannerURL,
+		&profile.Location,
+		&profile.UserLink,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, store.ErrNotFound
+		}
+		return nil, err
+	}
+	return &profile, nil
+}

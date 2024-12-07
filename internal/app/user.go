@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
 
@@ -186,4 +187,44 @@ func (app *Application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	httpio.NoContentResponse(w)
+}
+
+// GetUserProfileByUsername godoc
+//
+//	@Summary		Fetches a user profile
+//	@Description	Fetches a user profile by their username
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			username	path		string	true	"User username"
+//	@Success		200			{object}	models.GetUserResponse
+//	@Failure		400			{object}	error
+//	@Failure		404			{object}	error
+//	@Failure		500			{object}	error
+//	@Router			/user/{username} [get]
+func (app *Application) getUserProfile(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+	if username == "" {
+		app.BadRequestResponse(w, r, httpio.ErrEmptyParam)
+		return
+	}
+	userProfile, err := app.Service.User.GetProfile(r.Context(), username)
+	if err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.NotFoundResponse(w, r, err)
+		case services.ErrInvalidPayload:
+			app.BadRequestResponse(w, r, err)
+		default:
+			app.InternalServerErrorResponse(w, r, err)
+		}
+		return
+	}
+	response := &models.GetUserProfileResponse{
+		UserProfile: userProfile,
+	}
+	if err := httpio.JsonResponse(w, http.StatusCreated, response); err != nil {
+		app.InternalServerErrorResponse(w, r, err)
+		return
+	}
 }

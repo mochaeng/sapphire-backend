@@ -25,6 +25,19 @@ create table if not exists "user"(
     constraint fk_role foreign key (role_id) references "role"(id)
 );
 
+create table if not exists "user_profile" (
+    id bigserial primary key,
+    user_id bigint not null,
+    description text,
+    avatar_url text,
+    banner_url text,
+    location varchar(100),
+    user_link varchar(255),
+    created_at timestamp(0) with time zone not null default now (),
+    updated_at timestamp(0) with time zone not null default now (),
+    constraint fk_user foreign key (user_id) references "user" (id) on delete set null
+);
+
 create table if not exists "user_session" (
     id text not null primary key,
     user_id integer not null,
@@ -34,11 +47,12 @@ create table if not exists "user_session" (
 );
 
 create table if not exists "oauth_account" (
-	"provider_id" text not null,
-	"provider_user_id" text not null,
-	"user_id" text not null,
+	provider_id text not null,
+	provider_user_id text not null,
+	user_id text not null,
 
-	constraint "oauth_account_provider_id_provider_user_id_pk" primary key("provider_id","provider_user_id")
+	constraint oauth_account_provider_id_provider_user_id_pk primary key(provider_id, provider_user_id),
+	constraint fk_user_id foreign key (user_id) references "user"(id)
 );
 
 create table if not exists "post"(

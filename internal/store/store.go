@@ -36,6 +36,7 @@ type Store struct {
 		CreateAndInvite(ctx context.Context, userInvitation *models.UserInvitation) error
 		Activate(ctx context.Context, plainToken string) error
 		Delete(ctx context.Context, userID int64) error
+		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
 	}
 	Feed interface {
 		Get(ctx context.Context, userID int64, paginateQuery models.PaginateFeedQuery) ([]*models.PostWithMetadata, error)

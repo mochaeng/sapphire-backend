@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	MaxUsernameSize = 16
-	MinUsernameSize = 3
+	MaxUsernameSize = 18
+	MinUsernameSize = 2
 )
 
 type UserService struct {
@@ -49,6 +49,13 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*mode
 		return nil, ErrInvalidPayload
 	}
 	return s.store.User.GetByUsername(ctx, username)
+}
+
+func (s *UserService) GetProfile(ctx context.Context, username string) (*models.UserProfile, error) {
+	if len(username) < MinUsernameSize || len(username) > MaxUsernameSize {
+		return nil, ErrInvalidPayload
+	}
+	return s.store.User.GetProfile(ctx, username)
 }
 
 func (s *UserService) Follow(ctx context.Context, followerID int64, followedID int64) error {

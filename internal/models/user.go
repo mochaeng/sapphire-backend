@@ -22,6 +22,16 @@ type UserInvitation struct {
 	Expired time.Duration `json:"expired"`
 }
 
+type UserProfile struct {
+	Description string `json:"description,omitempty"`
+	AvatarURL   string `json:"avatar_url,omitempty"`
+	BannerURL   string `json:"banner_url,omitempty"`
+	Location    string `json:"location,omitempty"`
+	UserLink    string `json:"user_link,omitempty"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+}
+
 type UserResponse struct {
 	ID        int64  `json:"id,omitempty"`
 	Username  string `json:"username,omitempty"`
@@ -31,6 +41,10 @@ type UserResponse struct {
 
 type GetUserResponse struct {
 	*UserResponse
+}
+
+type GetUserProfileResponse struct {
+	*UserProfile
 }
 
 type CreateUserPayload struct{}
