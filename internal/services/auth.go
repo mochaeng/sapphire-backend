@@ -59,7 +59,11 @@ func (s *AuthService) RegisterUser(ctx context.Context, payload *models.Register
 		Expired: s.cfg.Mail.Expired,
 	}
 
-	err := s.store.User.CreateAndInvite(ctx, userInvitation)
+	userProfile := &models.UserProfile{
+		User: user,
+	}
+
+	err := s.store.User.CreateAndInvite(ctx, userInvitation, userProfile)
 	if err != nil {
 		return nil, err
 	}

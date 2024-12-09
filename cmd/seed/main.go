@@ -17,7 +17,7 @@ func main() {
 
 	addr := env.GetString(
 		"DATABASE_ADDR",
-		"postgres://hutao:adminpassword@localhost:8888/limerence?sslmode=disable",
+		"postgres://hutao:adminpassword@localhost:8888/sapphire?sslmode=disable",
 	)
 	conn, err := database.NewConnection(addr, 1, 1, 900)
 	if err != nil {

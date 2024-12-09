@@ -27,16 +27,23 @@ type Store struct {
 		GetAllByUsername(context.Context, string) ([]models.Post, error)
 	}
 	User interface {
-		Create(ctx context.Context, tx *sql.Tx, user *models.User) error
+		// Create(ctx context.Context, tx *sql.Tx, user *models.User) error
 		GetByID(context.Context, int64) (*models.User, error)
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
 		GetByEmail(ctx context.Context, email string) (*models.User, error)
 		Follow(ctx context.Context, followerID int64, followedID int64) error
 		Unfollow(ctx context.Context, followerID int64, followedID int64) error
-		CreateAndInvite(ctx context.Context, userInvitation *models.UserInvitation) error
+		CreateAndInvite(ctx context.Context, userInvitation *models.UserInvitation, userProfile *models.UserProfile) error
 		Activate(ctx context.Context, plainToken string) error
 		Delete(ctx context.Context, userID int64) error
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
+		// CreateProfile(ctx context.Context, tx *sql.Tx, userProfile *models.UserProfile) error
+
+		// seed helpers
+		// / this function should only be called during seed
+		CreateProfileFull(ctx context.Context, userProfile *models.UserProfile) error
+		// / this function should only be called during seed
+		CreateAndActivate(ctx context.Context, user *models.User) error
 	}
 	Feed interface {
 		Get(ctx context.Context, userID int64, paginateQuery models.PaginateFeedQuery) ([]*models.PostWithMetadata, error)

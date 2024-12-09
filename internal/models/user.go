@@ -23,13 +23,15 @@ type UserInvitation struct {
 }
 
 type UserProfile struct {
-	Description string `json:"description,omitempty"`
-	AvatarURL   string `json:"avatar_url,omitempty"`
-	BannerURL   string `json:"banner_url,omitempty"`
-	Location    string `json:"location,omitempty"`
-	UserLink    string `json:"user_link,omitempty"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	User        *User
+	ID          int64
+	Description string
+	AvatarURL   string
+	BannerURL   string
+	Location    string
+	UserLink    string
+	CreatedAt   string
+	UpdatedAt   string
 }
 
 type UserResponse struct {
@@ -44,7 +46,16 @@ type GetUserResponse struct {
 }
 
 type GetUserProfileResponse struct {
-	*UserProfile
+	Username    string `json:"username"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name,omitempty"`
+	Description string `json:"description,omitempty"`
+	AvatarURL   string `json:"avatar_url,omitempty"`
+	BannerURL   string `json:"banner_url,omitempty"`
+	Location    string `json:"location,omitempty"`
+	UserLink    string `json:"user_link,omitempty"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type CreateUserPayload struct{}

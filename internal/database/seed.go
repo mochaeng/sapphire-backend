@@ -20,16 +20,18 @@ func GetSeedContentFromFile(path string) ([]byte, error) {
 func Seed(store *store.Store, db *sql.DB) {
 	ctx := context.Background()
 
-	tx, _ := db.BeginTx(ctx, nil)
 	users := generateUsers(100)
 	for _, user := range users {
-		if err := store.User.Create(ctx, tx, user); err != nil {
+		if err := store.User.CreateAndActivate(ctx, user); err != nil {
 			log.Panicf("error creating user: [%+v]: %s", user, err)
 		}
 	}
-	tx.Commit()
-
 	profiles := generateProfiles(users)
+	for _, profile := range profiles {
+		if err := store.User.CreateProfileFull(ctx, profile); err != nil {
+			log.Panicf("error creating profile")
+		}
+	}
 
 	posts := generatePosts(200, users)
 	for _, post := range posts {
@@ -76,10 +78,11 @@ func generateProfiles(users []*models.User) []*models.UserProfile {
 	profiles := make([]*models.UserProfile, len(users))
 	for i := 0; i < len(users); i++ {
 		profiles[i] = &models.UserProfile{
+			User:        users[i],
 			Description: profileDescriptions[rand.Intn(len(profileDescriptions))],
 			AvatarURL:   avatarURLs[rand.Intn(len(avatarURLs))],
 			BannerURL:   bannerURLs[rand.Intn(len(bannerURLs))],
-			Location:    "in your hert",
+			Location:    "in your heart",
 			UserLink:    "my.website.com",
 		}
 	}

@@ -65,6 +65,9 @@ func (app *Application) Mount() http.Handler {
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		r.Route("/user", func(r chi.Router) {
+			r.Route("/profile", func(r chi.Router) {
+				r.Get("/{username}", app.getUserProfile)
+			})
 			r.Route("/{userID}", func(r chi.Router) {
 				r.With(app.userContextMiddleware).Get("/", app.getUserHandler)
 				r.Group(func(r chi.Router) {

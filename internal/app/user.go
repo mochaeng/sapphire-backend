@@ -201,7 +201,7 @@ func (app *Application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 //	@Failure		400			{object}	error
 //	@Failure		404			{object}	error
 //	@Failure		500			{object}	error
-//	@Router			/user/{username} [get]
+//	@Router			/user/profile/{username} [get]
 func (app *Application) getUserProfile(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
 	if username == "" {
@@ -221,7 +221,16 @@ func (app *Application) getUserProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response := &models.GetUserProfileResponse{
-		UserProfile: userProfile,
+		Username:    userProfile.User.Username,
+		FirstName:   userProfile.User.FirstName,
+		LastName:    userProfile.User.LastName,
+		Description: userProfile.Description,
+		AvatarURL:   userProfile.AvatarURL,
+		BannerURL:   userProfile.BannerURL,
+		Location:    userProfile.Location,
+		UserLink:    userProfile.UserLink,
+		CreatedAt:   userProfile.CreatedAt,
+		UpdatedAt:   userProfile.UpdatedAt,
 	}
 	if err := httpio.JsonResponse(w, http.StatusCreated, response); err != nil {
 		app.InternalServerErrorResponse(w, r, err)

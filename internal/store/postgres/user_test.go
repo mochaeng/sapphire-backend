@@ -67,7 +67,7 @@ func (suite *UserStoreTestSuite) TestCreateUser() {
 	tx, err := suite.userStore.db.BeginTx(suite.ctx, nil)
 	require.NoError(t, err, "could not begin transaction")
 
-	err = suite.userStore.Create(suite.ctx, tx, user)
+	err = suite.userStore.create(suite.ctx, tx, user)
 	require.NoError(t, err, "could not create user")
 
 	err = tx.Commit()

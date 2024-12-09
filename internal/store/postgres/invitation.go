@@ -9,18 +9,6 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
 
-func (s *UserStore) CreateAndInvite(ctx context.Context, userInvitation *models.UserInvitation) error {
-	return store.WithTx(ctx, s.db, func(tx *sql.Tx) error {
-		if err := s.Create(ctx, tx, userInvitation.User); err != nil {
-			return err
-		}
-		if err := s.createUserInvitation(ctx, tx, userInvitation); err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
 func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, userInvitation *models.UserInvitation) error {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
