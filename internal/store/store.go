@@ -24,10 +24,8 @@ type Store struct {
 		GetByIDWithUser(context.Context, int64) (*models.Post, error)
 		DeleteByID(context.Context, int64) error
 		UpdateByID(context.Context, *models.Post) error
-		GetAllByUsername(context.Context, string) ([]models.Post, error)
 	}
 	User interface {
-		// Create(ctx context.Context, tx *sql.Tx, user *models.User) error
 		GetByID(context.Context, int64) (*models.User, error)
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
 		GetByEmail(ctx context.Context, email string) (*models.User, error)
@@ -37,7 +35,7 @@ type Store struct {
 		Activate(ctx context.Context, plainToken string) error
 		Delete(ctx context.Context, userID int64) error
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
-		// CreateProfile(ctx context.Context, tx *sql.Tx, userProfile *models.UserProfile) error
+		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
 
 		// seed helpers
 		// / this function should only be called during seed

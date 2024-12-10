@@ -9,6 +9,7 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/media"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"go.uber.org/zap"
 )
@@ -22,7 +23,7 @@ type PostService struct {
 	logger *zap.SugaredLogger
 }
 
-func (s *PostService) Create(ctx context.Context, user *models.User, payload *models.CreatePostPayload, file []byte) (*models.Post, error) {
+func (s *PostService) Create(ctx context.Context, user *models.User, payload *payloads.CreatePostPayload, file []byte) (*models.Post, error) {
 	if err := Validate.Struct(payload); err != nil {
 		return nil, ErrInvalidPayload
 	}
@@ -50,7 +51,7 @@ func (s *PostService) Create(ctx context.Context, user *models.User, payload *mo
 	return post, nil
 }
 
-func (s *PostService) Update(ctx context.Context, post *models.Post, payload *models.UpdatePostPayload) error {
+func (s *PostService) Update(ctx context.Context, post *models.Post, payload *payloads.UpdatePostPayload) error {
 	if err := Validate.Struct(payload); err != nil {
 		return ErrInvalidPayload
 	}

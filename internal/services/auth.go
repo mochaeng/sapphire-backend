@@ -13,6 +13,7 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/cryptoutils"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"go.uber.org/zap"
 )
@@ -34,7 +35,7 @@ type AuthService struct {
 	logger *zap.SugaredLogger
 }
 
-func (s *AuthService) RegisterUser(ctx context.Context, payload *models.RegisterUserPayload) (*models.UserInvitation, error) {
+func (s *AuthService) RegisterUser(ctx context.Context, payload *payloads.RegisterUserPayload) (*models.UserInvitation, error) {
 	if err := Validate.Struct(payload); err != nil {
 		return nil, ErrInvalidPayload
 	}
@@ -96,7 +97,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, payload *models.Register
 	return userInvitation, nil
 }
 
-func (s *AuthService) Authenticate(ctx context.Context, payload *models.SigninPayload) (*models.User, error) {
+func (s *AuthService) Authenticate(ctx context.Context, payload *payloads.SigninPayload) (*models.User, error) {
 	if err := models.Validate.Struct(payload); err != nil {
 		return nil, ErrInvalidPayload
 	}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/models"
@@ -68,4 +69,8 @@ func (s *UserService) Unfollow(ctx context.Context, unfollowerID int64, unfollow
 
 func (s *UserService) Activate(ctx context.Context, token string) error {
 	return s.store.User.Activate(ctx, token)
+}
+
+func (s *UserService) GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error) {
+	return s.store.User.GetPosts(ctx, username, cursor, limit)
 }

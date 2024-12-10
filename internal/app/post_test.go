@@ -7,6 +7,7 @@ import (
 
 	"github.com/mochaeng/sapphire-backend/internal/mocks"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/responses"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"github.com/mochaeng/sapphire-backend/internal/testutils"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,7 @@ func TestGetPostHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var response struct {
-			Data models.GetPostResponse `json:"data"`
+			Data responses.GetPostResponse `json:"data"`
 		}
 		err = json.NewDecoder(rr.Body).Decode(&response)
 		require.NoError(t, err, "failed to decode response: %v", err)

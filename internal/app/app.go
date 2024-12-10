@@ -65,6 +65,9 @@ func (app *Application) Mount() http.Handler {
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		r.Route("/user", func(r chi.Router) {
+			r.Route("/posts", func(r chi.Router) {
+				r.Get("/{username}", app.getUserPosts)
+			})
 			r.Route("/profile", func(r chi.Router) {
 				r.Get("/{username}", app.getUserProfile)
 			})

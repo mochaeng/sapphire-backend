@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
-	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
+	"github.com/mochaeng/sapphire-backend/internal/models/responses"
 	service "github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
@@ -17,14 +18,14 @@ import (
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		models.RegisterUserPayload	true	"User credentials"
-//	@Success		201		{object}	models.RegisterUserResponse	"User registered"
+//	@Param			payload	body		RegisterUserPayload	true	"User credentials"
+//	@Success		201		{object}	RegisterUserResponse	"User registered"
 //	@Failure		400		{object}	error
 //	@Failure		409		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/auth/signup [post]
 func (app *Application) signupHandler(w http.ResponseWriter, r *http.Request) {
-	var payload models.RegisterUserPayload
+	var payload payloads.RegisterUserPayload
 	if err := httpio.ReadJSON(w, r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
@@ -43,7 +44,7 @@ func (app *Application) signupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &models.RegisterUserResponse{
+	response := &responses.RegisterUserResponse{
 		Username:  userInviation.User.Username,
 		CreatedAt: userInviation.User.CreatedAt,
 		IsActive:  userInviation.User.IsActive,
@@ -61,14 +62,14 @@ func (app *Application) signupHandler(w http.ResponseWriter, r *http.Request) {
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		models.CreateUserTokenPayload	true	"User credentials"
+//	@Param			payload	body		responses.CreateUserTokenPayload	true	"User credentials"
 //	@Success		204		"user has signin"
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/auth/signin [post]
 func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
-	var payload models.SigninPayload
+	var payload payloads.SigninPayload
 	if err := httpio.ReadJSON(w, r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
@@ -178,7 +179,7 @@ func (app *Application) authMeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &models.AuthMeResponse{
+	response := &responses.AuthMeResponse{
 		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,

@@ -4,10 +4,11 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
-	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/responses"
 	"github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
@@ -27,8 +28,8 @@ import (
 //	@Router			/user/{userID} [get]
 func (app *Application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
-	response := &models.GetUserResponse{
-		UserResponse: &models.UserResponse{
+	response := &responses.GetUserResponse{
+		UserResponse: &responses.UserResponse{
 			ID:        user.ID,
 			Username:  user.Username,
 			FirstName: user.FirstName,
@@ -69,8 +70,8 @@ func (app *Application) getUserByUsername(w http.ResponseWriter, r *http.Request
 		}
 		return
 	}
-	response := &models.GetUserResponse{
-		UserResponse: &models.UserResponse{
+	response := &responses.GetUserResponse{
+		UserResponse: &responses.UserResponse{
 			ID:        user.ID,
 			Username:  user.Username,
 			FirstName: user.FirstName,
@@ -220,19 +221,81 @@ func (app *Application) getUserProfile(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	response := &models.GetUserProfileResponse{
-		Username:    userProfile.User.Username,
-		FirstName:   userProfile.User.FirstName,
-		LastName:    userProfile.User.LastName,
-		Description: userProfile.Description,
-		AvatarURL:   userProfile.AvatarURL,
-		BannerURL:   userProfile.BannerURL,
-		Location:    userProfile.Location,
-		UserLink:    userProfile.UserLink,
-		CreatedAt:   userProfile.CreatedAt,
-		UpdatedAt:   userProfile.UpdatedAt,
+	response := &responses.GetUserProfileResponse{
+		Username:      userProfile.User.Username,
+		FirstName:     userProfile.User.FirstName,
+		LastName:      userProfile.User.LastName,
+		Description:   userProfile.Description,
+		AvatarURL:     userProfile.AvatarURL,
+		BannerURL:     userProfile.BannerURL,
+		Location:      userProfile.Location,
+		UserLink:      userProfile.UserLink,
+		NumFollowing:  userProfile.NumFollowing,
+		NumFollowers:  userProfile.NumFollowers,
+		NumPosts:      userProfile.NumPosts,
+		NumMediaPosts: userProfile.NumMediaPosts,
+		CreatedAt:     userProfile.CreatedAt,
+		UpdatedAt:     userProfile.UpdatedAt,
 	}
 	if err := httpio.JsonResponse(w, http.StatusCreated, response); err != nil {
+		app.InternalServerErrorResponse(w, r, err)
+		return
+	}
+}
+
+func (app *Application) getUserPosts(w http.ResponseWriter, r *http.Request) {
+	app.Logger.Info("not even here?")
+	username := chi.URLParam(r, "username")
+	if username == "" {
+		app.BadRequestResponse(w, r, httpio.ErrEmptyParam)
+		return
+	}
+	query := r.URL.Query()
+	limitParam := query.Get("limit")
+	limit := 10
+	if limitParam != "" {
+		numParsed, err := httpio.ParseAsInt(limitParam)
+		if err != nil {
+			app.BadRequestResponse(w, r, err)
+			return
+		}
+		limit = numParsed
+	}
+	cursorParam := query.Get("cursor")
+	cursor := time.Now()
+	if cursorParam != "" {
+		parsedTime, err := time.Parse(time.DateTime, cursorParam)
+		if err != nil {
+			app.BadRequestResponse(w, r, err)
+			return
+		}
+		cursor = parsedTime
+	}
+	posts, err := app.Service.User.GetPosts(r.Context(), username, cursor, limit)
+	if err != nil {
+		app.BadRequestResponse(w, r, err)
+		return
+	}
+	var response responses.GetUserPostsResponse
+	response.Posts = make([]responses.PostResponse, len(posts))
+	for idx, post := range posts {
+		response.Posts[idx] = responses.PostResponse{
+			ID:        post.ID,
+			Tittle:    post.Tittle,
+			Content:   post.Content,
+			MediaURL:  post.Media.String,
+			Tags:      post.Tags,
+			CreatedAt: post.CreatedAt,
+			UpdatedAt: post.UpdatedAt,
+			User: responses.UserResponse{
+				ID:        post.User.ID,
+				Username:  post.User.Username,
+				FirstName: post.User.FirstName,
+				LastName:  post.User.LastName,
+			},
+		}
+	}
+	if err := httpio.JsonResponse(w, http.StatusOK, response); err != nil {
 		app.InternalServerErrorResponse(w, r, err)
 		return
 	}

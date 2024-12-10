@@ -18,7 +18,8 @@ func (s *FeedStore) Get(ctx context.Context, userID int64, paginateQuery models.
 	defer cancel()
 	query := `
 		select
-				p.id, p.user_id, p.tittle, p."content", p.created_at, p.tags, u.username, u.first_name, u.last_name, count(c.id) as comment_count
+			p.id, p.user_id, p.tittle, p."content", p.created_at, p.tags, u.username,
+		 	u.first_name, u.last_name, count(c.id) as comment_count
 		from post p
 		left join "comment" c on c.post_id = p.id
 		left join "user" u on p.user_id = u.id

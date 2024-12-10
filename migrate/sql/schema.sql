@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS "comment"(
   constraint fk_user foreign key (user_id) references "user"(id) on delete set null
 );
 
-create table if not exists "follower"(
+create table if not exists "follow"(
     follower_id bigint not null,
     followed_id bigint not null,
     created_at timestamp(0) with time zone not null default now(),

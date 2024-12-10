@@ -12,7 +12,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mochaeng/sapphire-backend/internal/app"
-	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
 	"github.com/mochaeng/sapphire-backend/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ type MainFlowsSuite struct {
 
 func (suite *MainFlowsSuite) TestUserCreationAndPosting() {
 	t := suite.T()
-	userPayload := &models.RegisterUserPayload{
+	userPayload := &payloads.RegisterUserPayload{
 		Username:  "gaga77",
 		FirstName: "Lady",
 		Email:     "gaga@jype.com",
@@ -76,7 +76,7 @@ func (suite *MainFlowsSuite) TestUserCreationAndPosting() {
 func (suite *MainFlowsSuite) TestUserUniqueness() {
 	t := suite.T()
 
-	userPayload := &models.RegisterUserPayload{
+	userPayload := &payloads.RegisterUserPayload{
 		Username:  "chae77",
 		FirstName: "son",
 		Email:     "chaechae@jype.com",
@@ -87,7 +87,7 @@ func (suite *MainFlowsSuite) TestUserUniqueness() {
 	assert.Equal(t, response.Data.Username, userPayload.Username)
 	assert.Equal(t, response.Data.IsActive, false)
 
-	userSameEmailPayload := &models.RegisterUserPayload{
+	userSameEmailPayload := &payloads.RegisterUserPayload{
 		Username:  "aya",
 		FirstName: "aya",
 		Email:     "chaechae@jype.com",
@@ -96,7 +96,7 @@ func (suite *MainFlowsSuite) TestUserUniqueness() {
 	response = registerUser(t, suite.mux, userSameEmailPayload)
 	assert.Equal(t, http.StatusConflict, response.rr.Code)
 
-	userSameUsernamePayload := &models.RegisterUserPayload{
+	userSameUsernamePayload := &payloads.RegisterUserPayload{
 		Username:  "eva_krauser",
 		FirstName: "eva",
 		Email:     "eva@jype.com",

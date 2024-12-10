@@ -2,10 +2,12 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
 )
 
 var Validate *validator.Validate
@@ -22,16 +24,17 @@ type Service struct {
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
 		GetCached(ctx context.Context, userID int64) (*models.User, error)
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
+		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
 	}
 	Post interface {
-		Create(ctx context.Context, user *models.User, payload *models.CreatePostPayload, file []byte) (*models.Post, error)
+		Create(ctx context.Context, user *models.User, payload *payloads.CreatePostPayload, file []byte) (*models.Post, error)
 		GetWithUser(ctx context.Context, postID int64) (*models.Post, error)
 		Delete(ctx context.Context, postID int64) error
-		Update(ctx context.Context, post *models.Post, payload *models.UpdatePostPayload) error
+		Update(ctx context.Context, post *models.Post, payload *payloads.UpdatePostPayload) error
 	}
 	Auth interface {
-		RegisterUser(ctx context.Context, payload *models.RegisterUserPayload) (*models.UserInvitation, error)
-		Authenticate(ctx context.Context, payload *models.SigninPayload) (*models.User, error)
+		RegisterUser(ctx context.Context, payload *payloads.RegisterUserPayload) (*models.UserInvitation, error)
+		Authenticate(ctx context.Context, payload *payloads.SigninPayload) (*models.User, error)
 		GenerateSessionToken() (string, error)
 		CreateSession(token string, userID int64) (*models.Session, error)
 		ValidateSessionToken(token string) (*models.Session, error)

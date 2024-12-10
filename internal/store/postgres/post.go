@@ -98,45 +98,6 @@ func (s *PostStore) GetByIDWithUser(ctx context.Context, postID int64) (*models.
 	return &post, nil
 }
 
-func (s *PostStore) GetAllByUsername(ctx context.Context, username string) ([]models.Post, error) {
-	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
-	defer cancel()
-	query := `
-		select p.id, p.created_at, p.tittle, p."content", p.tags, p.media_url, u.first_name, u.last_name, u.username
-		from "user" u join post p on u.id = p.user_id
-		where username = $1;
-	`
-	rows, err := s.db.QueryContext(ctx, query, username)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var posts []models.Post
-	for rows.Next() {
-		post := models.Post{}
-		post.User = &models.User{}
-		err := rows.Scan(
-			&post.ID,
-			&post.CreatedAt,
-			&post.Tittle,
-			&post.Content,
-			&post.Tags,
-			&post.Media,
-			&post.User.FirstName,
-			&post.User.LastName,
-			&post.User.Username,
-		)
-		if err != nil {
-			return posts, errorUserTransform(err)
-		}
-		posts = append(posts, post)
-	}
-	if err = rows.Err(); err != nil {
-		return posts, err
-	}
-	return posts, nil
-}
-
 func (s *PostStore) DeleteByID(ctx context.Context, postID int64) error {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()

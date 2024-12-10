@@ -7,6 +7,8 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
+	"github.com/mochaeng/sapphire-backend/internal/models/responses"
 	service "github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
@@ -38,7 +40,7 @@ func (app *Application) createPostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var payload models.CreatePostPayload
+	var payload payloads.CreatePostPayload
 	if err := httpio.ReadFormDataValues(r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
@@ -65,7 +67,7 @@ func (app *Application) createPostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response := &models.CreatePostResponse{
+	response := &responses.CreatePostResponse{
 		ID:        post.ID,
 		Tittle:    post.Tittle,
 		Content:   post.Content,
@@ -95,14 +97,14 @@ func (app *Application) createPostHandler(w http.ResponseWriter, r *http.Request
 //	@Router			/post/{postID} [get]
 func (app *Application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
-	response := &models.GetPostResponse{
+	response := &responses.GetPostResponse{
 		Tittle:    post.Tittle,
 		Content:   post.Content,
 		Tags:      post.Tags,
 		MediaURL:  post.Media.String,
 		CreatedAt: post.CreatedAt,
 		UpdatedAt: post.CreatedAt,
-		User: models.UserResponse{
+		User: responses.UserResponse{
 			ID:        post.User.ID,
 			Username:  post.User.Username,
 			FirstName: post.User.FirstName,
@@ -159,7 +161,7 @@ func (app *Application) deletePostHandler(w http.ResponseWriter, r *http.Request
 //	@Router			/post/{postID} [patch]
 func (app *Application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
-	var payload models.UpdatePostPayload
+	var payload payloads.UpdatePostPayload
 	if err := httpio.ReadJSON(w, r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
@@ -175,7 +177,7 @@ func (app *Application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response := &models.UpdatePostResponse{
+	response := &responses.UpdatePostResponse{
 		Tittle:    post.Tittle,
 		Content:   post.Content,
 		UpdatedAt: post.UpdatedAt,

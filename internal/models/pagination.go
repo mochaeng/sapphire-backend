@@ -3,9 +3,7 @@ package models
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
 )
@@ -39,7 +37,7 @@ func (feed *PaginateFeedQuery) Parse(r *http.Request) error {
 
 	limit := query.Get(LimitParam)
 	if limit != "" {
-		limitNum, err := parseAsInt(limit)
+		limitNum, err := httpio.ParseAsInt(limit)
 		if err != nil {
 			return err
 		}
@@ -48,7 +46,7 @@ func (feed *PaginateFeedQuery) Parse(r *http.Request) error {
 
 	offset := query.Get(OffsetParam)
 	if offset != "" {
-		offsetNum, err := parseAsInt(offset)
+		offsetNum, err := httpio.ParseAsInt(offset)
 		if err != nil {
 			return err
 		}
@@ -72,7 +70,7 @@ func (feed *PaginateFeedQuery) Parse(r *http.Request) error {
 
 	since := query.Get(SinceParam)
 	if since != "" {
-		sinceParsed, err := parseTime(since)
+		sinceParsed, err := httpio.ParseTime(since)
 		if err != nil {
 			return ErrInvalidDateFormat
 		}
@@ -81,7 +79,7 @@ func (feed *PaginateFeedQuery) Parse(r *http.Request) error {
 
 	until := query.Get(UntilParam)
 	if until != "" {
-		untilParsed, err := parseTime(until)
+		untilParsed, err := httpio.ParseTime(until)
 		if err != nil {
 			return ErrInvalidDateFormat
 		}
@@ -89,20 +87,4 @@ func (feed *PaginateFeedQuery) Parse(r *http.Request) error {
 	}
 
 	return nil
-}
-
-func parseTime(date string) (string, error) {
-	parsedTime, err := time.Parse(time.DateTime, date)
-	if err != nil {
-		return "", err
-	}
-	return parsedTime.Format(time.DateTime), nil
-}
-
-func parseAsInt(param string) (int, error) {
-	paramNum, err := strconv.Atoi(param)
-	if err != nil {
-		return 0, httpio.ErrInvalidSearchParamType
-	}
-	return paramNum, nil
 }

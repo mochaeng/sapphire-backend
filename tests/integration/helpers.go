@@ -16,7 +16,8 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/app"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
-	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
+	"github.com/mochaeng/sapphire-backend/internal/models/responses"
 	"github.com/mochaeng/sapphire-backend/internal/ratelimiter"
 	service "github.com/mochaeng/sapphire-backend/internal/services"
 	redisstore "github.com/mochaeng/sapphire-backend/internal/store/cache/redis"
@@ -29,7 +30,7 @@ import (
 )
 
 type RegisterUserResponse struct {
-	Data models.RegisterUserResponse `json:"data"`
+	Data responses.RegisterUserResponse `json:"data"`
 	rr   *httptest.ResponseRecorder
 }
 
@@ -115,7 +116,7 @@ func createNewAppSuite(db *sql.DB, parsedRedisConnStr string) (*app.Application,
 	return app, nil
 }
 
-func registerUser(t *testing.T, mux http.Handler, payload *models.RegisterUserPayload) RegisterUserResponse {
+func registerUser(t *testing.T, mux http.Handler, payload *payloads.RegisterUserPayload) RegisterUserResponse {
 	jsonData, err := json.Marshal(payload)
 	require.NoError(t, err, ErrPayloadMarshal)
 
@@ -147,7 +148,7 @@ func makePost(t *testing.T, mux http.Handler, cookie *http.Cookie, tittle, conte
 
 	rr := testutils.ExecuteRequest(req, mux)
 	var resp struct {
-		Data models.CreatePostResponse `json:"data"`
+		Data responses.CreatePostResponse `json:"data"`
 	}
 	err = json.NewDecoder(rr.Body).Decode(&resp)
 	require.NoError(t, err)
@@ -163,7 +164,7 @@ func activateUser(t *testing.T, mux http.Handler, token string) {
 }
 
 func signinUser(t *testing.T, mux http.Handler, email string, password string) *httptest.ResponseRecorder {
-	payload := models.SigninPayload{
+	payload := payloads.SigninPayload{
 		Email:    email,
 		Password: password,
 	}

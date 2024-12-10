@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"github.com/mochaeng/sapphire-backend/internal/testutils"
@@ -211,10 +212,17 @@ func (s *UserStore) GetProfile(ctx context.Context, username string) (*models.Us
 			coalesce(up."location", ''),
 			coalesce(up.user_link, ''),
 			up.created_at,
-			up.updated_at
+			up.updated_at,
+			count(distinct case when f.followed_id = u.id then f.follower_id end) as num_followers,
+		    count(distinct case when f.follower_id = u.id then f.followed_id end) as num_following,
+		    count(distinct p.id) as num_posts,
+		    count(distinct case when p.media_url is null then p.id end) as num_media_posts
 		from "user" u
-		join user_profile up
-		ON u.id = up.user_id where username = $1
+		left join user_profile up on up.user_id = u.id
+		left join follower f on (f.follower_id = u.id or f.followed_id = u.id)
+		left join post p on p.user_id = u.id
+		where username = $1
+		group by u.id, up.id;
 	`
 	var profile models.UserProfile
 	profile.User = &models.User{}
@@ -233,6 +241,10 @@ func (s *UserStore) GetProfile(ctx context.Context, username string) (*models.Us
 		&profile.UserLink,
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
+		&profile.NumFollowers,
+		&profile.NumFollowing,
+		&profile.NumPosts,
+		&profile.NumMediaPosts,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -241,6 +253,51 @@ func (s *UserStore) GetProfile(ctx context.Context, username string) (*models.Us
 		return nil, err
 	}
 	return &profile, nil
+}
+
+func (s *UserStore) GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
+	defer cancel()
+	query := `
+		SELECT p.id, p.tittle, p.user_id, p.content, p.media_url, p.tags, p.created_at,
+			   p.updated_at, u.username, u.first_name, u.last_name
+		FROM post p
+		left join "user" u on p.user_id  = u.id
+		WHERE username = $1 AND p.created_at < $2
+		ORDER BY created_at DESC
+		LIMIT $3;
+	`
+	rows, err := s.db.QueryContext(ctx, query, username, cursor, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var posts []*models.Post
+	for rows.Next() {
+		post := &models.Post{}
+		post.User = &models.User{}
+		err := rows.Scan(
+			&post.ID,
+			&post.Tittle,
+			&post.User.ID,
+			&post.Content,
+			&post.Media,
+			pq.Array(&post.Tags),
+			&post.CreatedAt,
+			&post.UpdatedAt,
+			&post.User.Username,
+			&post.User.FirstName,
+			&post.User.LastName,
+		)
+		if err != nil {
+			return nil, errorPostTransform(err)
+		}
+		posts = append(posts, post)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return posts, nil
 }
 
 func (s *UserStore) createProfile(ctx context.Context, tx *sql.Tx, userProfile *models.UserProfile) error {
