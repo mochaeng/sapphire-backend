@@ -244,7 +244,6 @@ func (app *Application) getUserProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) getUserPosts(w http.ResponseWriter, r *http.Request) {
-	app.Logger.Info("not even here?")
 	username := chi.URLParam(r, "username")
 	if username == "" {
 		app.BadRequestResponse(w, r, httpio.ErrEmptyParam)
