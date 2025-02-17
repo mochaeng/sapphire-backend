@@ -1,0 +1,16 @@
+.github/**
+.git
+bin/
+
+.env
+.env.dev
+.env.example
+.env.prod
+
+.gitignore
+Dockerfile
+docker-compose*
+
+**/*.md
+**/test/**
+Insomnia_2024-10-29.json

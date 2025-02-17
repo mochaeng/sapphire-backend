@@ -4,3 +4,5 @@ tmp/
 
 Insomnia_2024-10-29.json
 .env
+.env.dev
+.env.prod
