@@ -7,11 +7,12 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
 	"github.com/stretchr/testify/mock"
 )
+
 type MockPostService struct {
 	mock.Mock
 }
 
-func (m *MockPostService) Create(ctx context.Context, user *models.User, payload *payloads.CreatePostPayload, file []byte) (*models.Post, error) {
+func (m *MockPostService) Create(ctx context.Context, user *models.User, payload *payloads.CreatePostDataValuesPayload, file []byte) (*models.Post, error) {
 	args := m.Called(ctx, user, payload, file)
 	return args.Get(0).(*models.Post), args.Error(1)
 }

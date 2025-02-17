@@ -23,7 +23,7 @@ type PostService struct {
 	logger *zap.SugaredLogger
 }
 
-func (s *PostService) Create(ctx context.Context, user *models.User, payload *payloads.CreatePostPayload, file []byte) (*models.Post, error) {
+func (s *PostService) Create(ctx context.Context, user *models.User, payload *payloads.CreatePostDataValuesPayload, file []byte) (*models.Post, error) {
 	if err := Validate.Struct(payload); err != nil {
 		return nil, ErrInvalidPayload
 	}

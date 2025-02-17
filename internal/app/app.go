@@ -43,6 +43,7 @@ func (app *Application) Mount() http.Handler {
 			"http://localhost:3000", "https://localhost:3000",
 			"http://localhost:5173", "https://localhost:5173",
 			"http://localhost:4173", "https://localhost:4173",
+			"http://0:0:0:7777",
 		},
 		// AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -57,8 +58,9 @@ func (app *Application) Mount() http.Handler {
 	}
 	r.Use(middleware.Timeout(60 * time.Second))
 
+	r.Get("/health", app.healthCheckHandler)
+
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/health", app.healthCheckHandler)
 
 		r.With(app.basicAuthMiddleware).Get("/debug/vars", expvar.Handler().ServeHTTP)
 
@@ -118,7 +120,7 @@ func (app *Application) Mount() http.Handler {
 
 func (app *Application) Run(mux http.Handler) error {
 	docs.SwaggerInfo.Version = app.Config.Version
-	docs.SwaggerInfo.Host = app.Config.ApiURL
+	docs.SwaggerInfo.Host = app.Config.Addr
 	docs.SwaggerInfo.BasePath = "/v1"
 
 	server := http.Server{

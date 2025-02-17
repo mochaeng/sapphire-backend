@@ -27,7 +27,7 @@ type Service struct {
 		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
 	}
 	Post interface {
-		Create(ctx context.Context, user *models.User, payload *payloads.CreatePostPayload, file []byte) (*models.Post, error)
+		Create(ctx context.Context, user *models.User, payload *payloads.CreatePostDataValuesPayload, file []byte) (*models.Post, error)
 		GetWithUser(ctx context.Context, postID int64) (*models.Post, error)
 		Delete(ctx context.Context, postID int64) error
 		Update(ctx context.Context, post *models.Post, payload *payloads.UpdatePostPayload) error

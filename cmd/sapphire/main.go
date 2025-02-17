@@ -49,13 +49,10 @@ func main() {
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
 
-	err := godotenv.Load()
-	if err != nil {
-		logger.Fatalw("error loading .env file", "err", err)
-	}
+	godotenv.Load()
 
 	cfg := &config.Cfg{
-		Addr:    env.GetString("ADDR", ":7777"),
+		Addr:    env.GetString("ADDR", "localhost:7777"),
 		AppName: "Sapphire",
 		DbConfig: config.DbCfg{
 			Addr: env.GetString(
@@ -74,10 +71,9 @@ func main() {
 				Db:       env.GetInt("REDIS_DB", 0),
 			},
 		},
-		Env:         "dev",
+		Env:         env.GetString("ENV", "dev"),
 		Version:     "0.0.1",
 		MediaFolder: "data",
-		ApiURL:      env.GetString("EXTERNAL_URL", "localhost:7777"),
 		FrontedURL:  env.GetString("FRONTED_URL", "http://localhost:5173"),
 		Mail: config.MailCfg{
 			Expired:   24 * time.Hour,
@@ -108,6 +104,8 @@ func main() {
 		}
 		logger.Info("media folder was created", "path", cfg.MediaFolder)
 	}
+
+	fmt.Println(cfg.DbConfig)
 
 	db, err := database.NewConnection(
 		cfg.DbConfig.Addr,
@@ -147,9 +145,9 @@ func main() {
 	}
 	cacheStore := redisstore.NewRedisStore(rdb)
 
-	smtpServer := env.GetString("SMTP_SERVER", "")
-	fromEmail := env.GetString("FROM_EMAIL", "")
-	emailPassword := env.GetString("EMAIL_PASSWORD", "")
+	smtpServer := env.GetString("SMTP_SERVER", "gmail")
+	fromEmail := env.GetString("FROM_EMAIL", "email")
+	emailPassword := env.GetString("EMAIL_PASSWORD", "password")
 	clientMailer, err := mailer.NewGomail(smtpServer, fromEmail, emailPassword)
 	if err != nil {
 		logger.Panicw("could not create mailer", "error", err)

@@ -40,7 +40,7 @@ func (app *Application) createPostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var payload payloads.CreatePostPayload
+	var payload payloads.CreatePostDataValuesPayload
 	if err := httpio.ReadFormDataValues(r, &payload); err != nil {
 		app.BadRequestResponse(w, r, err)
 		return

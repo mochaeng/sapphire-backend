@@ -39,7 +39,7 @@ type Cfg struct {
 	DbConfig    DbCfg
 	Version     string
 	MediaFolder string
-	ApiURL      string
+	// ApiURL      string
 	Mail        MailCfg
 	Auth        AuthCfg
 	Cacher      CacheCfg

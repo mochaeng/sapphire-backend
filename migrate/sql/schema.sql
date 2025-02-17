@@ -61,7 +61,9 @@ create table if not exists "post"(
     user_id bigint not null,
     content text not null,
     tags varchar(255) [],
-    media_url varchar(255),
+    -- media_url varchar(255),
+    media_urls text [],
+    media_type varchar(255),  -- photo/video/gif/many
     created_at timestamp(0) with time zone not null default now(),
     updated_at timestamp(0) with time zone not null default now(),
 
