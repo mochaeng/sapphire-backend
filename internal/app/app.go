@@ -45,6 +45,7 @@ func (app *Application) Mount() http.Handler {
 			"http://localhost:4173", "https://localhost:4173",
 			"http://0:0:0:7777",
 			"http://api.sapphire.mochaeng.xyz", "https://api.sapphire.mochaeng.xyz",
+			"http://sapphire.mochaeng.xyz", "https://sapphire.mochaeng.xyz",
 		},
 		// AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
