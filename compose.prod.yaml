@@ -1,0 +1,108 @@
+services:
+    watchtower:
+        image: containrrr/watchtower
+        command:
+            - "--label-enable"
+            - "--interval"
+            - "30"
+            - "--rolling-restart"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+    frontend:
+        image: ghcr.io/mochaeng/sapphire-frontend:latest
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.frontend.rule=Host(`yourdomain.com`)"
+            - "traefik.http.routers.frontend.entrypoints=websecure"
+            - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+            # watchtower:
+            - "com.centurylinklabs.watchtower.enable=true"
+        environment:
+            - RUNTIME_API_URL=${VITE_API_URL}
+        deploy:
+            mode: replicated
+            replicas: 2
+
+    api:
+        image: ghcr.io/mochaeng/sapphire-backend:latest
+        environment:
+            - ADDR=${ADDR}
+            - DATABASE_URL=${DATABASE_URL}
+            - REDIS_ADDR=${REDIS_ADDR}
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+            - REDIS_DB=${REDIS_DB}
+        expose:
+            - "7777"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.api.rule=Host(`api.yourdomain.com`)"
+            - "traefik.http.routers.api.entrypoints=websecure"
+            - "traefik.http.routers.api.tls.certresolver=myresolver"
+            # watchtower:
+            - "com.centurylinklabs.watchtower.enable=true"
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        deploy:
+            mode: replicated
+            replicas: 2
+
+    db:
+        image: postgres:16.4
+        restart: always
+        container_name: postgres-db
+        environment:
+            - POSTGRES_DB=${DATABASE_NAME}
+            - POSTGRES_USER=${DATABASE_USER}
+            - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+        volumes:
+            - db-volume:/var/lib/postgresql/data
+            - ./certs:/var/lib/postgresql/certs:ro
+            # - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+        expose:
+            - "5432"
+        ports:
+            - "127.0.0.1:5432:5432"
+        command: >
+            postgres -c ssl=on
+                     -c ssl_cert_file=/var/lib/postgresql/certs/server.crt
+                     -c ssl_key_file=/var/lib/postgresql/certs/server.key
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+    redis:
+        image: redis:6.2-alpine
+        container_name: redis
+        restart: always
+        expose:
+            - "6379"
+        command:
+            - /bin/sh
+            - -c
+            - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}" --save 60 1 --loglevel warning
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        env_file:
+            - .env
+
+volumes:
+    db-volume:
+networks:
+    default:
+        name: traefik-public
+        external: true
