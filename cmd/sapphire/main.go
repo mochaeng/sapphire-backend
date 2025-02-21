@@ -66,7 +66,7 @@ func main() {
 		Cacher: config.CacheCfg{
 			IsEnable: env.GetBool("CACHER_IS_ENABLE", true),
 			Redis: config.RedisCfg{
-				Addr:     env.GetString("REDIS_ADDR", "localhost:6379"),
+				Addr:     env.GetString("REDIS_ADDR", "redis:6379"),
 				Password: env.GetString("REDIS_PASSWORD", ""),
 				Db:       env.GetInt("REDIS_DB", 0),
 			},
@@ -141,7 +141,7 @@ func main() {
 			cfg.Cacher.Redis.Password,
 			cfg.Cacher.Redis.Db,
 		)
-		logger.Info("redis cache connection established")
+		logger.Infow("redis cache connection established", "addr", cfg.Cacher.Redis.Addr)
 	}
 	cacheStore := redisstore.NewRedisStore(rdb)
 

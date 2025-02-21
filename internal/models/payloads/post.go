@@ -1,7 +1,7 @@
 package payloads
 
 type CreatePostDataValuesPayload struct {
-	Tittle  string   `json:"tittle" validate:"required,min=1,max=100"`
+	Tittle  string   `json:"tittle" validate:"max=100"`
 	Content string   `json:"content" validate:"required,min=1,max=1000"`
 	Tags    []string `json:"tags,omitempty" validate:"max=5"`
 }
