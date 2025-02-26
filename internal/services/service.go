@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -10,10 +11,16 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
 )
 
-var Validate *validator.Validate
+var (
+	Validate      *validator.Validate
+	usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+)
 
 func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
+	Validate.RegisterValidation("username", func(fl validator.FieldLevel) bool {
+		return usernameRegex.MatchString(fl.Field().String())
+	})
 }
 
 type Service struct {
