@@ -36,6 +36,7 @@ type Store struct {
 		Delete(ctx context.Context, userID int64) error
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
 		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
+		CleanUpExpiredPendingAccounts(ctx context.Context) error
 
 		// seed helpers
 		// / this function should only be called during seed

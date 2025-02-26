@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"expvar"
 	"fmt"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mochaeng/sapphire-backend/internal/app"
 	"github.com/mochaeng/sapphire-backend/internal/config"
+	"github.com/mochaeng/sapphire-backend/internal/cronjobs"
 	"github.com/mochaeng/sapphire-backend/internal/database"
 	"github.com/mochaeng/sapphire-backend/internal/env"
 	"github.com/mochaeng/sapphire-backend/internal/mailer"
@@ -76,7 +78,7 @@ func main() {
 		MediaFolder: "data",
 		FrontedURL:  env.GetString("FRONTED_URL", "http://localhost:5173"),
 		Mail: config.MailCfg{
-			Expired:   24 * time.Hour,
+			Expired:   1 * time.Minute,
 			FromEmail: env.GetString("FROM_EMAIL", ""),
 		},
 		Auth: config.AuthCfg{
@@ -182,6 +184,13 @@ func main() {
 		return runtime.NumGoroutine()
 	}))
 
+	cronCtx, cronCancel := context.WithCancel(context.Background())
+	cronjobs.PurgeUnconfirmedUsers(cronCtx, store, 1*time.Minute, logger)
+
 	mux := app.Mount()
-	app.Logger.Fatal(app.Run(mux))
+	if err := app.Run(mux); err != nil {
+		app.Logger.Fatal(err)
+	}
+
+	cronCancel()
 }

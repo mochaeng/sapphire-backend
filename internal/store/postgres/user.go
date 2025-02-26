@@ -300,6 +300,55 @@ func (s *UserStore) GetPosts(ctx context.Context, username string, cursor time.T
 	return posts, nil
 }
 
+// Deletes unconfirmed user accounts whose invitation has expired.
+func (s *UserStore) CleanUpExpiredPendingAccounts(ctx context.Context) error {
+	return store.WithTx(ctx, s.db, func(tx *sql.Tx) error {
+		query := `
+			SELECT ui.user_id
+			FROM user_invitation ui
+			JOIN "user" u ON u.id = ui.user_id
+			WHERE ui.expired < $1
+			  AND u.is_active = false;
+		`
+		rows, err := tx.QueryContext(ctx, query, time.Now())
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		var userIDs []int64
+		for rows.Next() {
+			var id int64
+			if err := rows.Scan(&id); err != nil {
+				return err
+			}
+			userIDs = append(userIDs, id)
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+
+		if len(userIDs) == 0 {
+			return nil
+		}
+
+		queryInv := `DELETE FROM user_invitation WHERE user_id = ANY($1)`
+		if _, err := tx.ExecContext(ctx, queryInv, pq.Array(userIDs)); err != nil {
+			return err
+		}
+		queryProf := `DELETE FROM user_profile WHERE user_id = ANY($1)`
+		if _, err := tx.ExecContext(ctx, queryProf, pq.Array(userIDs)); err != nil {
+			return err
+		}
+		queryUser := `DELETE FROM "user" WHERE id = ANY($1)`
+		if _, err := tx.ExecContext(ctx, queryUser, pq.Array(userIDs)); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func (s *UserStore) createProfile(ctx context.Context, tx *sql.Tx, userProfile *models.UserProfile) error {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
