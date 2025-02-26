@@ -63,10 +63,8 @@ func (app *Application) Mount() http.Handler {
 	r.Get("/health", app.healthCheckHandler)
 
 	r.Route("/v1", func(r chi.Router) {
-
 		r.With(app.basicAuthMiddleware).Get("/debug/vars", expvar.Handler().ServeHTTP)
-
-		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
+		r.With(app.basicAuthMiddleware).Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		r.Route("/user", func(r chi.Router) {
 			r.Route("/posts", func(r chi.Router) {
