@@ -13,6 +13,8 @@ import (
 	postgresmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/google"
 	"github.com/mochaeng/sapphire-backend/internal/app"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/cronjobs"
@@ -97,6 +99,13 @@ func main() {
 			TimeFrame:           time.Second * 5,
 			IsEnable:            env.GetBool("RATE_LIMITER_ENABLED", true),
 		},
+		OAuth: config.OAuthConfig{
+			Google: config.GoogleOAuth{
+				Key:         env.GetString("GOOGLE_KEY", ""),
+				Secret:      env.GetString("GOOGLE_SECRET", ""),
+				CallbackURI: env.GetString("GOOGLE_CALLBACK_URI", ""),
+			},
+		},
 	}
 
 	if _, err := os.Stat(cfg.MediaFolder); os.IsNotExist(err) {
@@ -107,7 +116,7 @@ func main() {
 		logger.Info("media folder was created", "path", cfg.MediaFolder)
 	}
 
-	fmt.Println(cfg.DbConfig)
+	fmt.Println(cfg)
 
 	db, err := database.NewConnection(
 		cfg.DbConfig.Addr,
@@ -168,6 +177,15 @@ func main() {
 		CacheStore: cacheStore,
 	}
 	services := service.NewServices(&serviceCfg)
+
+	goth.UseProviders(
+		google.New(
+			cfg.OAuth.Google.Key,
+			cfg.OAuth.Google.Secret,
+			cfg.OAuth.Google.CallbackURI,
+			"email", "profile",
+		),
+	)
 
 	app := &app.Application{
 		Config:      cfg,

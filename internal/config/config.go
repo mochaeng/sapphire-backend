@@ -47,6 +47,7 @@ type Cfg struct {
 	Env         string
 	FrontedURL  string
 	ApiBasePath string
+	OAuth       OAuthConfig
 }
 
 type DbCfg struct {
@@ -100,4 +101,14 @@ type RateLimiterConfig struct {
 	RequestPerTimeFrame int
 	TimeFrame           time.Duration
 	IsEnable            bool
+}
+
+type OAuthConfig struct {
+	Google GoogleOAuth
+}
+
+type GoogleOAuth struct {
+	Key         string
+	Secret      string
+	CallbackURI string
 }

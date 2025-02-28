@@ -106,6 +106,11 @@ func (app *Application) Mount() http.Handler {
 			r.With(app.authTokenMiddleware).Post("/signout", app.signoutHandler)
 			r.With(app.authTokenMiddleware).Post("/status", app.authStatusHandler)
 			r.With(app.authTokenMiddleware).Post("/me", app.authMeHandler)
+
+			// oauth
+			r.Get("/{provider}/login", app.OAuthLoginHandler)
+			r.Get("/{provider}/callback", app.OAuthCallbackHandler)
+
 		})
 
 		r.Route("/verify-email", func(r chi.Router) {
