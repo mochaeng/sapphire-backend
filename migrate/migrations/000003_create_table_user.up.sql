@@ -4,7 +4,7 @@ create table if not exists "user"(
     last_name varchar(255) not null,
     email citext unique not null,
     username citext unique not null,
-    password bytea not null,
+    password bytea,
     is_active boolean not null default false,
     role_id int not null,
     created_at timestamp(0) with time zone not null default now(),

@@ -17,7 +17,7 @@ create table if not exists "user"(
     last_name varchar(255),
     email citext unique not null,
     username citext unique not null,
-    password_hash bytea not null,
+    password_hash bytea,
     is_active boolean not null default false,
     role_id int not null,
     created_at timestamp(0) with time zone not null default now(),
@@ -40,7 +40,7 @@ create table if not exists "user_profile" (
 
 create table if not exists "user_session" (
     id text not null primary key,
-    user_id integer not null,
+    user_id bigint not null,
     expires_at timestamptz not null,
 
     constraint fk_user_id foreign key (user_id) references "user"(id)
