@@ -45,3 +45,10 @@ type Role struct {
 	Level       int
 	Description string
 }
+
+type OAuthAccount struct {
+	ProviderID     string
+	ProviderUserID string
+	UserID         int64
+	CreatedAt      string
+}

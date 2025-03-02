@@ -4,6 +4,7 @@ import (
 	"context"
 	"expvar"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -12,8 +13,10 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	postgresmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
 	"github.com/mochaeng/sapphire-backend/internal/app"
 	"github.com/mochaeng/sapphire-backend/internal/config"
@@ -108,6 +111,7 @@ func main() {
 		},
 	}
 
+	// media folder
 	if _, err := os.Stat(cfg.MediaFolder); os.IsNotExist(err) {
 		err := os.MkdirAll(cfg.MediaFolder, os.ModePerm)
 		if err != nil {
@@ -118,6 +122,7 @@ func main() {
 
 	fmt.Println(cfg)
 
+	// database
 	db, err := database.NewConnection(
 		cfg.DbConfig.Addr,
 		cfg.DbConfig.MaxOpenConns,
@@ -130,6 +135,7 @@ func main() {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
+	// migrations
 	driver, err := postgresmigrate.WithInstance(db, &postgresmigrate.Config{})
 	if err != nil {
 		logger.Fatalw("could not create driver for migrations", "error", err)
@@ -143,8 +149,10 @@ func main() {
 		logger.Fatalw("could not run migrations up", "err", err)
 	}
 
+	// store
 	store := postgres.NewPostgresStore(db)
 
+	// cache
 	var rdb *redis.Client
 	if cfg.Cacher.IsEnable {
 		rdb = redisstore.NewRedisClient(
@@ -156,6 +164,7 @@ func main() {
 	}
 	cacheStore := redisstore.NewRedisStore(rdb)
 
+	// smtp
 	smtpServer := env.GetString("SMTP_SERVER", "gmail")
 	fromEmail := env.GetString("FROM_EMAIL", "email")
 	emailPassword := env.GetString("EMAIL_PASSWORD", "password")
@@ -164,11 +173,13 @@ func main() {
 		logger.Panicw("could not create mailer", "error", err)
 	}
 
+	// ratelimiter
 	rateLimiter := ratelimiter.NewFixedWindowLimiter(
 		cfg.RateLimiter.RequestPerTimeFrame,
 		cfg.RateLimiter.TimeFrame,
 	)
 
+	// services config
 	serviceCfg := config.ServiceCfg{
 		Logger:     logger,
 		Store:      store,
@@ -178,6 +189,14 @@ func main() {
 	}
 	services := service.NewServices(&serviceCfg)
 
+	// oauth
+	key := env.GetString("SESSION_SECRET", "")
+	cookieStore := sessions.NewCookieStore([]byte(key))
+	cookieStore.MaxAge(60 * 10)
+	cookieStore.Options.Secure = true
+	cookieStore.Options.HttpOnly = true
+	cookieStore.Options.SameSite = http.SameSiteLaxMode
+	gothic.Store = cookieStore
 	goth.UseProviders(
 		google.New(
 			cfg.OAuth.Google.Key,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/stretchr/testify/mock"
 )
@@ -45,4 +46,9 @@ func (m *MockUserService) GetProfile(ctx context.Context, username string) (*mod
 func (m *MockUserService) GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error) {
 	args := m.Called(ctx, username, cursor, limit)
 	return args.Get(0).([]*models.Post), args.Error(1)
+}
+
+func (m *MockUserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) error {
+	args := m.Called(ctx, gothUser)
+	return args.Error(1)
 }

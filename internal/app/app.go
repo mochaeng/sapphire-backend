@@ -110,6 +110,8 @@ func (app *Application) Mount() http.Handler {
 			// oauth
 			r.Get("/{provider}/login", app.OAuthLoginHandler)
 			r.Get("/{provider}/callback", app.OAuthCallbackHandler)
+			// r.Get("/google/login", app.)
+			//  r.Get("/google/callback", app.GoogleCallbackHandler)
 
 		})
 

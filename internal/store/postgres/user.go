@@ -72,12 +72,40 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*models.User, er
 	return &user, nil
 }
 
-func (s *UserStore) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+func (s *UserStore) GetByActivatedEmail(ctx context.Context, email string) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
 	query := `
 		select id, first_name, last_name, email, username, password, created_at, role_id
 		from "user" where email = $1 and is_active = true
+	`
+	var user models.User
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		email,
+	).Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Username,
+		&user.Password.Hash,
+		&user.CreatedAt,
+		&user.Role.ID,
+	)
+	if err != nil {
+		return nil, errorUserTransform(err)
+	}
+	return &user, nil
+}
+
+func (s *UserStore) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
+	defer cancel()
+	query := `
+		select id, first_name, last_name, email, username, password, created_at, role_id
+		from "user" where email = $1
 	`
 	var user models.User
 	err := s.db.QueryRowContext(

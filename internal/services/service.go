@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
@@ -32,6 +33,7 @@ type Service struct {
 		GetCached(ctx context.Context, userID int64) (*models.User, error)
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
 		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
+		LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) error
 	}
 	Post interface {
 		Create(ctx context.Context, user *models.User, payload *payloads.CreatePostDataValuesPayload, file []byte) (*models.Post, error)

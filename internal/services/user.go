@@ -2,8 +2,11 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
@@ -21,6 +24,52 @@ type UserService struct {
 	cfg        *config.Cfg
 	logger     *zap.SugaredLogger
 	cacheStore *cache.Store
+}
+
+func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) error {
+	if gothUser.Provider == "" || gothUser.Email == "" || gothUser.UserID == "" {
+		return fmt.Errorf("empty field from OAuth provider")
+	}
+
+	existingUser, err := s.store.User.GetByEmail(ctx, gothUser.Email)
+	if err != nil {
+		return err
+	}
+
+	oauthAccount := models.OAuthAccount{
+		ProviderID:     gothUser.Provider,
+		ProviderUserID: gothUser.UserID,
+	}
+
+	if existingUser != nil {
+		userID, err := s.store.OAuth.GetUserID(ctx, gothUser.Provider, gothUser.UserID)
+		if err != nil {
+			return err
+		}
+		if userID == nil {
+			oauthAccount.UserID = existingUser.ID
+			err := s.store.OAuth.CreateWithUserActivation(ctx, &oauthAccount, existingUser)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		user := models.User{
+			Username:  uuid.NewString(),
+			FirstName: gothUser.FirstName,
+			LastName:  gothUser.LastName,
+			Email:     gothUser.Email,
+			IsActive:  true,
+			Role: models.Role{
+				ID: config.Roles["user"].ID,
+			},
+		}
+		if err := s.store.OAuth.CreateWithUser(ctx, &oauthAccount, &user); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *UserService) GetCached(ctx context.Context, userID int64) (*models.User, error) {
@@ -60,10 +109,16 @@ func (s *UserService) GetProfile(ctx context.Context, username string) (*models.
 }
 
 func (s *UserService) Follow(ctx context.Context, followerID int64, followedID int64) error {
+	if followerID == followedID {
+		return ErrOperationNotAllowed
+	}
 	return s.store.User.Follow(ctx, followerID, followedID)
 }
 
 func (s *UserService) Unfollow(ctx context.Context, unfollowerID int64, unfollowedID int64) error {
+	if unfollowerID == unfollowedID {
+		return ErrOperationNotAllowed
+	}
 	return s.store.User.Unfollow(ctx, unfollowerID, unfollowedID)
 }
 

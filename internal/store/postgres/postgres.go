@@ -7,12 +7,14 @@ import (
 )
 
 func NewPostgresStore(db *sql.DB) *store.Store {
+	userStore := &UserStore{db: db}
 	return &store.Store{
 		Post:    &PostStore{db: db},
-		User:    &UserStore{db: db},
+		User:    userStore,
 		Comment: &CommentStore{db: db},
 		Feed:    &FeedStore{db: db},
 		Session: &SessionStore{db: db},
+		OAuth:   &OAuthStore{db: db, userStore: userStore},
 	}
 }
 

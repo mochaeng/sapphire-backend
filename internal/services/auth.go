@@ -102,7 +102,7 @@ func (s *AuthService) Authenticate(ctx context.Context, payload *payloads.Signin
 		return nil, ErrInvalidPayload
 	}
 
-	user, err := s.store.User.GetByEmail(ctx, payload.Email)
+	user, err := s.store.User.GetByActivatedEmail(ctx, payload.Email)
 	if err != nil {
 		return nil, err
 	}

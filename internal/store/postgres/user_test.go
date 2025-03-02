@@ -76,7 +76,7 @@ func (suite *UserStoreTestSuite) TestCreateUser() {
 
 func (suite *UserStoreTestSuite) TestRetrieveUser() {
 	t := suite.T()
-	retrivedUser, err := suite.userStore.GetByEmail(suite.ctx, "momo@mail.com")
+	retrivedUser, err := suite.userStore.GetByActivatedEmail(suite.ctx, "momo@mail.com")
 	require.NoError(t, err, "could not retrieve user")
 	assert.Equal(t, retrivedUser.FirstName, "momo")
 	assert.Equal(t, retrivedUser.LastName, "hirai")

@@ -29,6 +29,7 @@ type Store struct {
 		GetByID(context.Context, int64) (*models.User, error)
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
 		GetByEmail(ctx context.Context, email string) (*models.User, error)
+		GetByActivatedEmail(ctx context.Context, email string) (*models.User, error)
 		Follow(ctx context.Context, followerID int64, followedID int64) error
 		Unfollow(ctx context.Context, followerID int64, followedID int64) error
 		CreateAndInvite(ctx context.Context, userInvitation *models.UserInvitation, userProfile *models.UserProfile) error
@@ -56,6 +57,11 @@ type Store struct {
 	Comment interface {
 		GetByPostID(context.Context, int64) (*[]models.Comment, error)
 		Create(context.Context, *models.Comment) error
+	}
+	OAuth interface {
+		CreateWithUserActivation(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User) error
+		CreateWithUser(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User) error
+		GetUserID(ctx context.Context, provider, providerUserID string) (*int64, error)
 	}
 }
 
