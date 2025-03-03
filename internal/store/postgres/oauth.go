@@ -43,6 +43,7 @@ func (s *OAuthStore) CreateWithUser(ctx context.Context, oauthAccount *models.OA
 		if err := s.userStore.create(ctx, tx, user); err != nil {
 			return err
 		}
+		// creation doesn't not activate user, so we update here to activate it
 		if err := s.userStore.update(ctx, tx, user); err != nil {
 			return err
 		}
@@ -69,7 +70,7 @@ func (s *OAuthStore) GetUserID(ctx context.Context, provider, providerUserID str
 		query,
 		provider,
 		providerUserID,
-	).Scan(userID)
+	).Scan(&userID)
 	if err != nil {
 		return nil, errorUserTransform(err)
 	}

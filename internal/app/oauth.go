@@ -11,6 +11,7 @@ import (
 
 func (app *Application) OAuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
+
 	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
 	gothic.BeginAuthHandler(w, r)
 }
@@ -43,7 +44,36 @@ func (app *Application) OAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	err = app.Service.User.LinkOrCreateUserFromOAuth(ctx, &gothUser)
 	if err != nil {
 		app.BadRequestResponse(w, r, fmt.Errorf("oauth creation failed. Error: %w", err))
+		return
 	}
+
+	// return a user from the linkorcreateuserfromoauth
+	app.Logger.Infow("frontend URL", app.Config.FrontedURL)
+
+	// token, err := app.Service.Auth.GenerateSessionToken()
+	// if err != nil {
+	// 	app.InternalServerErrorResponse(w, r, err)
+	// 	return
+	// }
+
+	// session, err := app.Service.Auth.CreateSession(token, user.ID)
+	// if err != nil {
+	// 	app.InternalServerErrorResponse(w, r, err)
+	// 	return
+	// }
+
+	// cookie := http.Cookie{
+	// 	Name:     AuthTokenKey,
+	// 	Value:    token,
+	// 	Path:     "/",
+	// 	HttpOnly: true,
+	// 	Secure:   true,
+	// 	MaxAge:   int(time.Until(session.ExpiresAt).Seconds()),
+	// 	SameSite: http.SameSiteLaxMode,
+	// }
+	// http.SetCookie(w, &cookie)
+
+	http.Redirect(w, r, app.Config.FrontedURL, http.StatusPermanentRedirect)
 
 	fmt.Println(provider)
 	fmt.Println(gothUser)

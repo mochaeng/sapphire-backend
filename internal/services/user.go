@@ -32,7 +32,7 @@ func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *g
 	}
 
 	existingUser, err := s.store.User.GetByEmail(ctx, gothUser.Email)
-	if err != nil {
+	if err != nil && err != store.ErrNotFound {
 		return err
 	}
 
@@ -42,11 +42,11 @@ func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *g
 	}
 
 	if existingUser != nil {
-		userID, err := s.store.OAuth.GetUserID(ctx, gothUser.Provider, gothUser.UserID)
-		if err != nil {
+		id, err := s.store.OAuth.GetUserID(ctx, gothUser.Provider, gothUser.UserID)
+		if err != nil && err != store.ErrNotFound {
 			return err
 		}
-		if userID == nil {
+		if id == nil {
 			oauthAccount.UserID = existingUser.ID
 			err := s.store.OAuth.CreateWithUserActivation(ctx, &oauthAccount, existingUser)
 			if err != nil {
@@ -64,6 +64,7 @@ func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *g
 				ID: config.Roles["user"].ID,
 			},
 		}
+		s.logger.Infow("creating user and oatuh", "user", user, "oauth", oauthAccount)
 		if err := s.store.OAuth.CreateWithUser(ctx, &oauthAccount, &user); err != nil {
 			return err
 		}
