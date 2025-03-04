@@ -17,13 +17,13 @@ import (
 	"github.com/mochaeng/sapphire-backend/docs"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/ratelimiter"
-	service "github.com/mochaeng/sapphire-backend/internal/services"
+	"github.com/mochaeng/sapphire-backend/internal/services"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
 type Application struct {
-	Service     *service.Service
+	Service     *services.Service
 	Config      *config.Cfg
 	Logger      *zap.SugaredLogger
 	RateLimiter ratelimiter.RateLimiter
@@ -110,9 +110,6 @@ func (app *Application) Mount() http.Handler {
 			// oauth
 			r.Get("/{provider}/login", app.OAuthLoginHandler)
 			r.Get("/{provider}/callback", app.OAuthCallbackHandler)
-			// r.Get("/google/login", app.)
-			//  r.Get("/google/callback", app.GoogleCallbackHandler)
-
 		})
 
 		r.Route("/verify-email", func(r chi.Router) {

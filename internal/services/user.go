@@ -26,14 +26,16 @@ type UserService struct {
 	cacheStore *cache.Store
 }
 
-func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) error {
+func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) (*models.User, error) {
 	if gothUser.Provider == "" || gothUser.Email == "" || gothUser.UserID == "" {
-		return fmt.Errorf("empty field from OAuth provider")
+		return nil, fmt.Errorf("empty field from OAuth provider")
 	}
+
+	var user *models.User
 
 	existingUser, err := s.store.User.GetByEmail(ctx, gothUser.Email)
 	if err != nil && err != store.ErrNotFound {
-		return err
+		return nil, err
 	}
 
 	oauthAccount := models.OAuthAccount{
@@ -44,17 +46,18 @@ func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *g
 	if existingUser != nil {
 		id, err := s.store.OAuth.GetUserID(ctx, gothUser.Provider, gothUser.UserID)
 		if err != nil && err != store.ErrNotFound {
-			return err
+			return nil, err
 		}
 		if id == nil {
 			oauthAccount.UserID = existingUser.ID
 			err := s.store.OAuth.CreateWithUserActivation(ctx, &oauthAccount, existingUser)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
+		user = existingUser
 	} else {
-		user := models.User{
+		newUser := models.User{
 			Username:  uuid.NewString(),
 			FirstName: gothUser.FirstName,
 			LastName:  gothUser.LastName,
@@ -64,13 +67,14 @@ func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *g
 				ID: config.Roles["user"].ID,
 			},
 		}
-		s.logger.Infow("creating user and oatuh", "user", user, "oauth", oauthAccount)
-		if err := s.store.OAuth.CreateWithUser(ctx, &oauthAccount, &user); err != nil {
-			return err
+		s.logger.Infow("creating user and oatuh", "user", newUser, "oauth", oauthAccount)
+		if err := s.store.OAuth.CreateWithUser(ctx, &oauthAccount, &newUser); err != nil {
+			return nil, err
 		}
+		user = &newUser
 	}
 
-	return nil
+	return user, nil
 }
 
 func (s *UserService) GetCached(ctx context.Context, userID int64) (*models.User, error) {

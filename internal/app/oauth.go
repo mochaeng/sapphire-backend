@@ -12,13 +12,15 @@ import (
 func (app *Application) OAuthLoginHandler(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
 
-	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
+	r = setProviderInContext(r, provider)
+
 	gothic.BeginAuthHandler(w, r)
 }
 
 func (app *Application) OAuthCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
-	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
+
+	r = setProviderInContext(r, provider)
 
 	gothUser, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
@@ -41,44 +43,27 @@ func (app *Application) OAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	// 		- create session
 
 	ctx := context.Background()
-	err = app.Service.User.LinkOrCreateUserFromOAuth(ctx, &gothUser)
+	user, err := app.Service.User.LinkOrCreateUserFromOAuth(ctx, &gothUser)
 	if err != nil {
 		app.BadRequestResponse(w, r, fmt.Errorf("oauth creation failed. Error: %w", err))
 		return
 	}
 
-	// return a user from the linkorcreateuserfromoauth
-	app.Logger.Infow("frontend URL", app.Config.FrontedURL)
+	cookie, err := app.Service.Auth.GetCookieSession(user.ID)
+	if err != nil {
+		app.InternalServerErrorResponse(w, r, err)
+		return
+	}
 
-	// token, err := app.Service.Auth.GenerateSessionToken()
-	// if err != nil {
-	// 	app.InternalServerErrorResponse(w, r, err)
-	// 	return
-	// }
+	redirectURL := fmt.Sprintf("%s/auth/oauth-success", app.Config.FrontedURL)
+	http.SetCookie(w, cookie)
+	http.Redirect(w, r, redirectURL, http.StatusPermanentRedirect)
 
-	// session, err := app.Service.Auth.CreateSession(token, user.ID)
-	// if err != nil {
-	// 	app.InternalServerErrorResponse(w, r, err)
-	// 	return
-	// }
-
-	// cookie := http.Cookie{
-	// 	Name:     AuthTokenKey,
-	// 	Value:    token,
-	// 	Path:     "/",
-	// 	HttpOnly: true,
-	// 	Secure:   true,
-	// 	MaxAge:   int(time.Until(session.ExpiresAt).Seconds()),
-	// 	SameSite: http.SameSiteLaxMode,
-	// }
-	// http.SetCookie(w, &cookie)
-
-	http.Redirect(w, r, app.Config.FrontedURL, http.StatusPermanentRedirect)
-
-	fmt.Println(provider)
-	fmt.Println(gothUser)
+	// app.Logger.Infow("provider", provider)
+	// app.Logger.Infow("gothUser", gothUser)
 }
 
 func setProviderInContext(r *http.Request, provider string) *http.Request {
+	//lint:ignore SA1029 gothic expects a string
 	return r.WithContext(context.WithValue(r.Context(), "provider", provider))
 }

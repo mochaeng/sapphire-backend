@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 )
 
@@ -17,8 +18,6 @@ type userKey string
 type sessionKey string
 
 const (
-	AuthTokenKey = "session-id"
-
 	postCtx    postKey    = "post"
 	userCtx    userKey    = "user"
 	sessionCtx sessionKey = "session"
@@ -100,7 +99,7 @@ func (app *Application) basicAuthMiddleware(next http.Handler) http.Handler {
 
 func (app *Application) authTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(AuthTokenKey)
+		cookie, err := r.Cookie(services.AuthTokenKey)
 		if err != nil || len(cookie.Value) == 0 {
 			app.UnauthorizedErrorResponse(w, r, ErrMissingOrEmptyAuthToken)
 			return

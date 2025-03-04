@@ -13,6 +13,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mochaeng/sapphire-backend/internal/app"
 	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
+	"github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +54,7 @@ func (suite *MainFlowsSuite) TestUserCreationAndPosting() {
 	cookies := responseWithCookie.Result().Cookies()
 	require.Len(t, cookies, 1)
 	cookie := cookies[0]
-	require.Equal(t, app.AuthTokenKey, cookie.Name)
+	require.Equal(t, services.AuthTokenKey, cookie.Name)
 
 	makePost(
 		t,

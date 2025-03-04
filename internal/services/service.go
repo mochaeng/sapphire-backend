@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"net/http"
 	"regexp"
 	"time"
 
@@ -33,7 +34,7 @@ type Service struct {
 		GetCached(ctx context.Context, userID int64) (*models.User, error)
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
 		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
-		LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) error
+		LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) (*models.User, error)
 	}
 	Post interface {
 		Create(ctx context.Context, user *models.User, payload *payloads.CreatePostDataValuesPayload, file []byte) (*models.Post, error)
@@ -42,6 +43,9 @@ type Service struct {
 		Update(ctx context.Context, post *models.Post, payload *payloads.UpdatePostPayload) error
 	}
 	Auth interface {
+		// GetCookieSession creates a token and a user_session in the database, and returns a HTTPOnlyCookie with the token value
+		GetCookieSession(userID int64) (*http.Cookie, error)
+
 		RegisterUser(ctx context.Context, payload *payloads.RegisterUserPayload) (*models.UserInvitation, error)
 		Authenticate(ctx context.Context, payload *payloads.SigninPayload) (*models.User, error)
 		GenerateSessionToken() (string, error)

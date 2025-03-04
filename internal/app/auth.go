@@ -2,7 +2,6 @@ package app
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
 	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
@@ -85,29 +84,34 @@ func (app *Application) signinHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := app.Service.Auth.GenerateSessionToken()
+	// token, err := app.Service.Auth.GenerateSessionToken()
+	// if err != nil {
+	// 	app.InternalServerErrorResponse(w, r, err)
+	// 	return
+	// }
+
+	// session, err := app.Service.Auth.CreateSession(token, user.ID)
+	// if err != nil {
+	// 	app.InternalServerErrorResponse(w, r, err)
+	// 	return
+	// }
+
+	// cookie := http.Cookie{
+	// 	Name:     services.AuthTokenKey,
+	// 	Value:    token,
+	// 	Path:     "/",
+	// 	HttpOnly: true,
+	// 	Secure:   true,
+	// 	MaxAge:   int(time.Until(session.ExpiresAt).Seconds()),
+	// 	SameSite: http.SameSiteLaxMode,
+	// }
+	cookie, err := app.Service.Auth.GetCookieSession(user.ID)
 	if err != nil {
 		app.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	session, err := app.Service.Auth.CreateSession(token, user.ID)
-	if err != nil {
-		app.InternalServerErrorResponse(w, r, err)
-		return
-	}
-
-	cookie := http.Cookie{
-		Name:     AuthTokenKey,
-		Value:    token,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-		MaxAge:   int(time.Until(session.ExpiresAt).Seconds()),
-		SameSite: http.SameSiteLaxMode,
-	}
-	http.SetCookie(w, &cookie)
-
+	http.SetCookie(w, cookie)
 	httpio.NoContentResponse(w)
 }
 

@@ -6,18 +6,11 @@ import (
 
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
-	"github.com/mochaeng/sapphire-backend/internal/testutils"
 )
 
 type OAuthStore struct {
 	db        *sql.DB
 	userStore *UserStore
-}
-
-func newOAtuhStore(connStr string) *PostStore {
-	db := testutils.NewPostgresConnection(connStr)
-	store := &PostStore{db}
-	return store
 }
 
 func (s *OAuthStore) CreateWithUserActivation(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User) error {
@@ -26,9 +19,6 @@ func (s *OAuthStore) CreateWithUserActivation(ctx context.Context, oauthAccount 
 			return err
 		}
 		if !user.IsActive {
-			// if err := s.activateUser(ctx, tx, user); err != nil {
-			// 	return err
-			// }
 			user.IsActive = true
 			if err := s.userStore.update(ctx, tx, user); err != nil {
 				return err
@@ -96,26 +86,3 @@ func (s *OAuthStore) create(ctx context.Context, tx *sql.Tx, oauthAccount *model
 
 	return errorOAuthTransform(err)
 }
-
-// func (s *OAuthStore) activateUser(ctx context.Context, tx *sql.Tx, user *models.User) error {
-// 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
-// 	defer cancel()
-
-// 	query := `
-// 		update "user" u set is_active = true
-// 		where u.id = $1
-// 	`
-// 	result, err := tx.ExecContext(ctx, query, user.ID)
-// 	if err != nil {
-// 		return errorUserTransform(err)
-// 	}
-// 	count, err := result.RowsAffected()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if count == 0 {
-// 		return store.ErrNotFound
-// 	}
-
-// 	return nil
-// }

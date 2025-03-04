@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/services"
 )
 
 func getUserFromContext(r *http.Request) *models.User {
@@ -36,5 +37,5 @@ func deleteCookie(w http.ResponseWriter, cookieName string) {
 }
 
 func (app *Application) deleteUserSessionCookie(w http.ResponseWriter) {
-	deleteCookie(w, AuthTokenKey)
+	deleteCookie(w, services.AuthTokenKey)
 }

@@ -48,7 +48,7 @@ func (m *MockUserService) GetPosts(ctx context.Context, username string, cursor 
 	return args.Get(0).([]*models.Post), args.Error(1)
 }
 
-func (m *MockUserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) error {
+func (m *MockUserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) (*models.User, error) {
 	args := m.Called(ctx, gothUser)
-	return args.Error(1)
+	return args.Get(0).(*models.User), args.Error(1)
 }

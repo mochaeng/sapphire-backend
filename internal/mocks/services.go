@@ -1,11 +1,9 @@
 package mocks
 
-import (
-	service "github.com/mochaeng/sapphire-backend/internal/services"
-)
+import "github.com/mochaeng/sapphire-backend/internal/services"
 
-func NewMockService() service.Service {
-	return service.Service{
+func NewMockService() services.Service {
+	return services.Service{
 		User: &MockUserService{},
 		Post: &MockPostService{},
 	}

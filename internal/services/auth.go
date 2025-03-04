@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,6 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
+const AuthTokenKey = "session-id"
 const sessionExpiresIn = 30 * 24 * time.Hour
 
 var (
@@ -33,6 +35,30 @@ type AuthService struct {
 	cfg    *config.Cfg
 	mailer mailer.Client
 	logger *zap.SugaredLogger
+}
+
+func (s *AuthService) GetCookieSession(userID int64) (*http.Cookie, error) {
+	token, err := s.GenerateSessionToken()
+	if err != nil {
+		return nil, fmt.Errorf("could not create session token. Error: %w", err)
+	}
+
+	session, err := s.CreateSession(token, userID)
+	if err != nil {
+		return nil, fmt.Errorf("could not create session. Error: %w", err)
+	}
+
+	cookie := http.Cookie{
+		Name:     AuthTokenKey,
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		MaxAge:   int(time.Until(session.ExpiresAt).Seconds()),
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	return &cookie, nil
 }
 
 func (s *AuthService) RegisterUser(ctx context.Context, payload *payloads.RegisterUserPayload) (*models.UserInvitation, error) {
