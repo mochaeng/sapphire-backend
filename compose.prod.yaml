@@ -11,12 +11,13 @@ services:
 
     frontend:
         image: ghcr.io/mochaeng/sapphire-frontend:latest
+        # container_name: sapphire-frontend
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.frontend.rule=Host(`yourdomain.com`)"
             - "traefik.http.routers.frontend.entrypoints=websecure"
             - "traefik.http.routers.frontend.tls.certresolver=myresolver"
-            # watchtower:
+            # watchtower
             - "com.centurylinklabs.watchtower.enable=true"
         environment:
             - RUNTIME_API_URL=${VITE_API_URL}
@@ -26,12 +27,20 @@ services:
 
     api:
         image: ghcr.io/mochaeng/sapphire-backend:latest
+        # container_name: api
         environment:
             - ADDR=${ADDR}
             - DATABASE_URL=${DATABASE_URL}
+            - FRONTED_URL=${FRONTED_URL}
+            # redis
             - REDIS_ADDR=${REDIS_ADDR}
             - REDIS_PASSWORD=${REDIS_PASSWORD}
             - REDIS_DB=${REDIS_DB}
+            # oauth
+            - GOOGLE_SECRET=${GOOGLE_SECRET}
+            - GOOGLE_KEY=${GOOGLE_KEY}
+            - GOOGLE_CALLBACK_URI=${GOOGLE_CALLBACK_URI}
+            - SESSION_SECRET=${SESSION_SECRET}
         expose:
             - "7777"
         labels:
@@ -39,7 +48,7 @@ services:
             - "traefik.http.routers.api.rule=Host(`api.yourdomain.com`)"
             - "traefik.http.routers.api.entrypoints=websecure"
             - "traefik.http.routers.api.tls.certresolver=myresolver"
-            # watchtower:
+            # watchtower
             - "com.centurylinklabs.watchtower.enable=true"
         depends_on:
             db:
