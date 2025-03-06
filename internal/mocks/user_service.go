@@ -2,7 +2,6 @@ package mocks
 
 import (
 	"context"
-	"time"
 
 	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/models"
@@ -43,8 +42,8 @@ func (m *MockUserService) GetProfile(ctx context.Context, username string) (*mod
 	return args.Get(0).(*models.UserProfile), args.Error(1)
 }
 
-func (m *MockUserService) GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error) {
-	args := m.Called(ctx, username, cursor, limit)
+func (m *MockUserService) GetPostsFromUsername(ctx context.Context, username string, userPosts *models.UserPosts) ([]*models.Post, error) {
+	args := m.Called(ctx, username, userPosts)
 	return args.Get(0).([]*models.Post), args.Error(1)
 }
 

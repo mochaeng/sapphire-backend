@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/markbates/goth"
@@ -128,9 +127,6 @@ func (s *UserService) generateUniqueUsername(ctx context.Context) (string, error
 }
 
 func (s *UserService) GetByUsername(ctx context.Context, username string) (*models.User, error) {
-	// if len(username) < MinUsernameSize || len(username) > MaxUsernameSize {
-	// 	return nil, ErrInvalidPayload
-	// }
 	if err := models.ValidateUsername(username); err != nil {
 		return nil, ErrInvalidPayload
 	}
@@ -139,9 +135,6 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*mode
 }
 
 func (s *UserService) GetProfile(ctx context.Context, username string) (*models.UserProfile, error) {
-	// if len(username) < MinUsernameSize || len(username) > MaxUsernameSize {
-	// 	return nil, ErrInvalidPayload
-	// }
 	if err := models.ValidateUsername(username); err != nil {
 		return nil, ErrInvalidPayload
 	}
@@ -166,9 +159,16 @@ func (s *UserService) Activate(ctx context.Context, token string) error {
 	return s.store.User.Activate(ctx, token)
 }
 
-func (s *UserService) GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error) {
-	if err := models.ValidateUsername(username); err != nil {
+func (s *UserService) GetPostsFromUsername(ctx context.Context, username string, userPosts *models.UserPosts) ([]*models.Post, error) {
+	user, err := s.GetByUsername(ctx, username)
+	if err != nil {
 		return nil, ErrInvalidPayload
 	}
-	return s.store.User.GetPosts(ctx, username, cursor, limit)
+
+	userPosts.UserID = user.ID
+	userPosts.Username = user.Username
+	userPosts.FirstName = user.FirstName
+	userPosts.LastName = user.LastName
+
+	return s.store.User.GetPostsFrom(ctx, userPosts)
 }

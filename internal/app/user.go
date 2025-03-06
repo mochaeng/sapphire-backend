@@ -4,10 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
+	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/models/responses"
 	"github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
@@ -249,34 +249,28 @@ func (app *Application) getUserPosts(w http.ResponseWriter, r *http.Request) {
 		app.BadRequestResponse(w, r, httpio.ErrEmptyParam)
 		return
 	}
+
 	query := r.URL.Query()
 	limitParam := query.Get("limit")
-	limit := 10
-	if limitParam != "" {
-		numParsed, err := httpio.ParseAsInt(limitParam)
-		if err != nil {
-			app.BadRequestResponse(w, r, err)
-			return
-		}
-		limit = numParsed
-	}
 	cursorParam := query.Get("cursor")
-	cursor := time.Now()
-	if cursorParam != "" {
-		parsedTime, err := time.Parse(time.DateTime, cursorParam)
-		if err != nil {
-			app.BadRequestResponse(w, r, err)
-			return
-		}
-		cursor = parsedTime
-	}
-	posts, err := app.Service.User.GetPosts(r.Context(), username, cursor, limit)
+
+	userPosts := models.UserPosts{}
+	userPosts.Parser(limitParam, cursorParam)
+
+	posts, err := app.Service.User.GetPostsFromUsername(r.Context(), username, &userPosts)
 	if err != nil {
 		app.BadRequestResponse(w, r, err)
 		return
 	}
+
 	var response responses.GetUserPostsResponse
 	response.Posts = make([]responses.PostResponse, len(posts))
+	response.User = &responses.UserResponse{
+		Username:  userPosts.Username,
+		FirstName: userPosts.FirstName,
+		LastName:  userPosts.LastName,
+	}
+
 	for idx, post := range posts {
 		response.Posts[idx] = responses.PostResponse{
 			ID:        post.ID,
@@ -286,14 +280,9 @@ func (app *Application) getUserPosts(w http.ResponseWriter, r *http.Request) {
 			Tags:      post.Tags,
 			CreatedAt: post.CreatedAt,
 			UpdatedAt: post.UpdatedAt,
-			User: responses.UserResponse{
-				ID:        post.User.ID,
-				Username:  post.User.Username,
-				FirstName: post.User.FirstName,
-				LastName:  post.User.LastName,
-			},
 		}
 	}
+
 	if err := httpio.JsonResponse(w, http.StatusOK, response); err != nil {
 		app.InternalServerErrorResponse(w, r, err)
 		return

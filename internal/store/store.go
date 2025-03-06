@@ -43,7 +43,7 @@ type Store struct {
 		Activate(ctx context.Context, plainToken string) error
 		Delete(ctx context.Context, userID int64) error
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
-		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
+		GetPostsFrom(ctx context.Context, userPosts *models.UserPosts) ([]*models.Post, error)
 		CleanUpExpiredPendingAccounts(ctx context.Context) error
 
 		// this function should only be called during seed

@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
@@ -19,7 +18,7 @@ type Service struct {
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
 		GetCached(ctx context.Context, userID int64) (*models.User, error)
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
-		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
+		GetPostsFromUsername(ctx context.Context, username string, userPosts *models.UserPosts) ([]*models.Post, error)
 		LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) (*models.User, error)
 	}
 	Post interface {

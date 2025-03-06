@@ -288,23 +288,30 @@ func (s *UserStore) GetProfile(ctx context.Context, username string) (*models.Us
 	return &profile, nil
 }
 
-func (s *UserStore) GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error) {
+func (s *UserStore) GetPostsFrom(ctx context.Context, userPosts *models.UserPosts) ([]*models.Post, error) {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
+
 	query := `
-		SELECT p.id, p.tittle, p.user_id, p.content, p.media_url, p.tags, p.created_at,
-			   p.updated_at, u.username, u.first_name, u.last_name
+		SELECT p.id, p.tittle, p.content, p.media_url, p.tags, p.created_at,
+			   p.updated_at
 		FROM post p
-		left join "user" u on p.user_id  = u.id
-		WHERE username = $1 AND p.created_at < $2
+		WHERE p.user_id = $1 AND p.created_at < $2
 		ORDER BY created_at DESC
 		LIMIT $3;
 	`
-	rows, err := s.db.QueryContext(ctx, query, username, cursor, limit)
+	rows, err := s.db.QueryContext(
+		ctx,
+		query,
+		userPosts.UserID,
+		userPosts.Cursor,
+		userPosts.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var posts []*models.Post
 	for rows.Next() {
 		post := &models.Post{}
@@ -312,21 +319,18 @@ func (s *UserStore) GetPosts(ctx context.Context, username string, cursor time.T
 		err := rows.Scan(
 			&post.ID,
 			&post.Tittle,
-			&post.User.ID,
 			&post.Content,
 			&post.Media,
 			pq.Array(&post.Tags),
 			&post.CreatedAt,
 			&post.UpdatedAt,
-			&post.User.Username,
-			&post.User.FirstName,
-			&post.User.LastName,
 		)
 		if err != nil {
 			return nil, errorPostTransform(err)
 		}
 		posts = append(posts, post)
 	}
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}

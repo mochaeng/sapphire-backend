@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
 )
@@ -85,6 +86,44 @@ func (feed *PaginateFeedQuery) Parse(r *http.Request) error {
 		}
 		feed.Until = untilParsed
 	}
+
+	return nil
+}
+
+const DefaultLimit = 10
+
+var DefaultCursor = time.Now()
+
+type UserPosts struct {
+	UserID    int64
+	Limit     int
+	Cursor    time.Time
+	Username  string
+	FirstName string
+	LastName  string
+}
+
+func (payload *UserPosts) Parser(limitParam, cursorParam string) error {
+	limit := DefaultLimit
+	if limitParam != "" {
+		numParsed, err := httpio.ParseAsInt(limitParam)
+		if err != nil {
+			return httpio.ErrInvalidSearchParamType
+		}
+		limit = numParsed
+	}
+
+	cursor := DefaultCursor
+	if cursorParam != "" {
+		parsedTime, err := time.Parse(time.RFC3339, cursorParam)
+		if err != nil {
+			return httpio.ErrInvalidSearchParamType
+		}
+		cursor = parsedTime
+	}
+
+	payload.Limit = limit
+	payload.Cursor = cursor
 
 	return nil
 }
