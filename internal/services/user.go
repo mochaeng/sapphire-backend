@@ -3,20 +3,17 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
+	"github.com/mochaeng/sapphire-backend/internal/cryptoutils"
 	"github.com/mochaeng/sapphire-backend/internal/models"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"github.com/mochaeng/sapphire-backend/internal/store/cache"
 	"go.uber.org/zap"
-)
-
-const (
-	MaxUsernameSize = 18
-	MinUsernameSize = 2
 )
 
 type UserService struct {
@@ -57,8 +54,13 @@ func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *g
 		}
 		user = existingUser
 	} else {
+		randomUsername, err := s.generateUniqueUsername(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		newUser := models.User{
-			Username:  uuid.NewString(),
+			Username:  randomUsername,
 			FirstName: gothUser.FirstName,
 			LastName:  gothUser.LastName,
 			Email:     gothUser.Email,
@@ -67,8 +69,12 @@ func (s *UserService) LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *g
 				ID: config.Roles["user"].ID,
 			},
 		}
-		s.logger.Infow("creating user and oatuh", "user", newUser, "oauth", oauthAccount)
-		if err := s.store.OAuth.CreateWithUser(ctx, &oauthAccount, &newUser); err != nil {
+		userProfile := models.UserProfile{
+			User:      &newUser,
+			AvatarURL: gothUser.AvatarURL,
+		}
+		err = s.store.OAuth.CreateWithUser(ctx, &oauthAccount, &newUser, &userProfile)
+		if err != nil {
 			return nil, err
 		}
 		user = &newUser
@@ -99,15 +105,44 @@ func (s *UserService) GetCached(ctx context.Context, userID int64) (*models.User
 	return user, nil
 }
 
+// GenerateUniqueUsername generates a unique username, if somehow there's a collision
+// it defaults to a UUID following the usernames rules
+func (s *UserService) generateUniqueUsername(ctx context.Context) (string, error) {
+	base := "user_"
+	maxAttempts := 2
+	for range maxAttempts {
+		size := models.MaxUsernameSize - len(base)
+		suffix, err := cryptoutils.GenerateRandomSuffix(size)
+		if err != nil {
+			break
+		}
+		candidate := base + suffix
+		_, err = s.store.User.GetByUsername(ctx, candidate)
+		if err == store.ErrNotFound {
+			return candidate, models.ValidateUsername(candidate)
+		}
+	}
+
+	finalCandidate := strings.ReplaceAll(uuid.NewString(), "-", "")[:16]
+	return finalCandidate, models.ValidateUsername(finalCandidate)
+}
+
 func (s *UserService) GetByUsername(ctx context.Context, username string) (*models.User, error) {
-	if len(username) < MinUsernameSize || len(username) > MaxUsernameSize {
+	// if len(username) < MinUsernameSize || len(username) > MaxUsernameSize {
+	// 	return nil, ErrInvalidPayload
+	// }
+	if err := models.ValidateUsername(username); err != nil {
 		return nil, ErrInvalidPayload
 	}
+
 	return s.store.User.GetByUsername(ctx, username)
 }
 
 func (s *UserService) GetProfile(ctx context.Context, username string) (*models.UserProfile, error) {
-	if len(username) < MinUsernameSize || len(username) > MaxUsernameSize {
+	// if len(username) < MinUsernameSize || len(username) > MaxUsernameSize {
+	// 	return nil, ErrInvalidPayload
+	// }
+	if err := models.ValidateUsername(username); err != nil {
 		return nil, ErrInvalidPayload
 	}
 	return s.store.User.GetProfile(ctx, username)
@@ -132,5 +167,8 @@ func (s *UserService) Activate(ctx context.Context, token string) error {
 }
 
 func (s *UserService) GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error) {
+	if err := models.ValidateUsername(username); err != nil {
+		return nil, ErrInvalidPayload
+	}
 	return s.store.User.GetPosts(ctx, username, cursor, limit)
 }

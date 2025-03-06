@@ -1,15 +1,30 @@
 package models
 
 import (
+	"regexp"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 )
 
-var Validate *validator.Validate
+const (
+	MaxUsernameSize = 16
+	MinUsernameSize = 3
+)
+
+var (
+	Validate      *validator.Validate
+	usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+)
 
 func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
+
+	Validate.RegisterValidation("username", func(fl validator.FieldLevel) bool {
+		usernameSize := len(fl.Field().String())
+		isCorrectSize := usernameSize <= MaxUsernameSize && usernameSize >= MinUsernameSize
+		return usernameRegex.MatchString(fl.Field().String()) && isCorrectSize
+	})
 }
 
 type Follower struct {

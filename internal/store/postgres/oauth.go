@@ -28,13 +28,12 @@ func (s *OAuthStore) CreateWithUserActivation(ctx context.Context, oauthAccount 
 	})
 }
 
-func (s *OAuthStore) CreateWithUser(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User) error {
+func (s *OAuthStore) CreateWithUser(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User, userProfile *models.UserProfile) error {
 	return store.WithTx(ctx, s.db, func(tx *sql.Tx) error {
 		if err := s.userStore.create(ctx, tx, user); err != nil {
 			return err
 		}
-		// creation doesn't not activate user, so we update here to activate it
-		if err := s.userStore.update(ctx, tx, user); err != nil {
+		if err := s.userStore.createProfile(ctx, tx, userProfile); err != nil {
 			return err
 		}
 		oauthAccount.UserID = user.ID

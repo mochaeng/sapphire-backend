@@ -41,7 +41,6 @@ func (app *Application) OAuthCallbackHandler(w http.ResponseWriter, r *http.Requ
 	// 		- create user record
 	// 		- create oauth record
 	// 		- create session
-
 	ctx := context.Background()
 	user, err := app.Service.User.LinkOrCreateUserFromOAuth(ctx, &gothUser)
 	if err != nil {

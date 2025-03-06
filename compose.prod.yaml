@@ -32,6 +32,8 @@ services:
             - ADDR=${ADDR}
             - DATABASE_URL=${DATABASE_URL}
             - FRONTED_URL=${FRONTED_URL}
+            - AUTH_BASIC_USER=${AUTH_BASIC_USER}
+            - AUTH_BASIC_PASSWORD=${AUTH_BASIC_PASSWORD}
             # redis
             - REDIS_ADDR=${REDIS_ADDR}
             - REDIS_PASSWORD=${REDIS_PASSWORD}

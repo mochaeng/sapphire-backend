@@ -37,3 +37,9 @@ type UserProfile struct {
 	CreatedAt     string
 	UpdatedAt     string
 }
+
+func ValidateUsername(username string) error {
+	return Validate.Struct(struct {
+		Username string `validate:"required,username"`
+	}{Username: username})
+}

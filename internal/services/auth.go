@@ -62,7 +62,7 @@ func (s *AuthService) GetCookieSession(userID int64) (*http.Cookie, error) {
 }
 
 func (s *AuthService) RegisterUser(ctx context.Context, payload *payloads.RegisterUserPayload) (*models.UserInvitation, error) {
-	if err := Validate.Struct(payload); err != nil {
+	if err := models.Validate.Struct(payload); err != nil {
 		return nil, ErrInvalidPayload
 	}
 	user := &models.User{

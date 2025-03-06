@@ -27,7 +27,14 @@ type Store struct {
 	}
 	User interface {
 		GetByID(context.Context, int64) (*models.User, error)
+
+		// GetByUsername returns a user by their username
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
+
+		// GetActivatedByUsername returns a user by their username if their are
+		// activated in the system
+		GetActivatedByUsername(ctx context.Context, username string) (*models.User, error)
+
 		GetByEmail(ctx context.Context, email string) (*models.User, error)
 		GetByActivatedEmail(ctx context.Context, email string) (*models.User, error)
 		Follow(ctx context.Context, followerID int64, followedID int64) error
@@ -39,10 +46,9 @@ type Store struct {
 		GetPosts(ctx context.Context, username string, cursor time.Time, limit int) ([]*models.Post, error)
 		CleanUpExpiredPendingAccounts(ctx context.Context) error
 
-		// seed helpers
-		// / this function should only be called during seed
+		// this function should only be called during seed
 		CreateProfileFull(ctx context.Context, userProfile *models.UserProfile) error
-		// / this function should only be called during seed
+		// this function should only be called during seed
 		CreateAndActivate(ctx context.Context, user *models.User) error
 	}
 	Feed interface {
@@ -60,7 +66,7 @@ type Store struct {
 	}
 	OAuth interface {
 		CreateWithUserActivation(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User) error
-		CreateWithUser(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User) error
+		CreateWithUser(ctx context.Context, oauthAccount *models.OAuthAccount, user *models.User, userProfile *models.UserProfile) error
 		GetUserID(ctx context.Context, provider, providerUserID string) (*int64, error)
 	}
 }

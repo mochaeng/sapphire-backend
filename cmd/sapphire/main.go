@@ -120,7 +120,9 @@ func main() {
 		logger.Info("media folder was created", "path", cfg.MediaFolder)
 	}
 
-	fmt.Println(cfg)
+	if cfg.Env == "dev" {
+		logger.Infow("config", cfg)
+	}
 
 	// database
 	db, err := database.NewConnection(

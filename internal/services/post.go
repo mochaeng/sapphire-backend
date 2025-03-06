@@ -24,7 +24,7 @@ type PostService struct {
 }
 
 func (s *PostService) Create(ctx context.Context, user *models.User, payload *payloads.CreatePostDataValuesPayload, file []byte) (*models.Post, error) {
-	if err := Validate.Struct(payload); err != nil {
+	if err := models.Validate.Struct(payload); err != nil {
 		return nil, ErrInvalidPayload
 	}
 	fileURL := ""
@@ -52,7 +52,7 @@ func (s *PostService) Create(ctx context.Context, user *models.User, payload *pa
 }
 
 func (s *PostService) Update(ctx context.Context, post *models.Post, payload *payloads.UpdatePostPayload) error {
-	if err := Validate.Struct(payload); err != nil {
+	if err := models.Validate.Struct(payload); err != nil {
 		return ErrInvalidPayload
 	}
 	if payload.Content != "" {

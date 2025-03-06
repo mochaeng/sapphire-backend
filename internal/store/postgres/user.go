@@ -128,31 +128,36 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*models.User,
 	return &user, nil
 }
 
+func (s *UserStore) GetActivatedByUsername(ctx context.Context, username string) (*models.User, error) {
+	return s.getByUsername(ctx, username, true)
+	// ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
+	// defer cancel()
+	// query := `
+	// 	select id, first_name, last_name, email, username, created_at, role_id
+	// 	from "user" where username = $1 and is_active = true
+	// `
+	// var user models.User
+	// err := s.db.QueryRowContext(
+	// 	ctx,
+	// 	query,
+	// 	username,
+	// ).Scan(
+	// 	&user.ID,
+	// 	&user.FirstName,
+	// 	&user.LastName,
+	// 	&user.Email,
+	// 	&user.Username,
+	// 	&user.CreatedAt,
+	// 	&user.Role.ID,
+	// )
+	// if err != nil {
+	// 	return nil, errorUserTransform(err)
+	// }
+	// return &user, nil
+}
+
 func (s *UserStore) GetByUsername(ctx context.Context, username string) (*models.User, error) {
-	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
-	defer cancel()
-	query := `
-		select id, first_name, last_name, email, username, created_at, role_id
-		from "user" where username = $1 and is_active = true
-	`
-	var user models.User
-	err := s.db.QueryRowContext(
-		ctx,
-		query,
-		username,
-	).Scan(
-		&user.ID,
-		&user.FirstName,
-		&user.LastName,
-		&user.Email,
-		&user.Username,
-		&user.CreatedAt,
-		&user.Role.ID,
-	)
-	if err != nil {
-		return nil, errorUserTransform(err)
-	}
-	return &user, nil
+	return s.getByUsername(ctx, username, false)
 }
 
 func (s *UserStore) Follow(ctx context.Context, followerID int64, followedID int64) error {
@@ -381,8 +386,8 @@ func (s *UserStore) createProfile(ctx context.Context, tx *sql.Tx, userProfile *
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
 	query := `
-		insert into user_profile (user_id)
-		values($1)
+		insert into user_profile (user_id, avatar_url)
+		values($1, $2)
 		returning id, created_at
 	`
 	var profile models.UserProfile
@@ -390,6 +395,7 @@ func (s *UserStore) createProfile(ctx context.Context, tx *sql.Tx, userProfile *
 		ctx,
 		query,
 		&userProfile.User.ID,
+		&userProfile.AvatarURL,
 	).Scan(&profile.ID, &profile.CreatedAt)
 	if err != nil {
 		return errorUserTransform(err)
@@ -401,8 +407,8 @@ func (s *UserStore) create(ctx context.Context, tx *sql.Tx, user *models.User) e
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
 	query := `
-		insert into "user"(username, first_name, last_name, email, "password", role_id)
-		values($1, $2, $3, $4, $5, $6)
+		insert into "user"(username, first_name, last_name, email, "password", role_id, is_active)
+		values($1, $2, $3, $4, $5, $6, $7)
 		returning id, created_at
 	`
 	err := tx.QueryRowContext(
@@ -414,6 +420,7 @@ func (s *UserStore) create(ctx context.Context, tx *sql.Tx, user *models.User) e
 		user.Email,
 		user.Password.Hash,
 		user.Role.ID,
+		user.IsActive,
 	).Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
 		return errorUserTransform(err)
@@ -519,4 +526,35 @@ func (s *UserStore) update(ctx context.Context, tx *sql.Tx, user *models.User) e
 		return store.ErrNotFound
 	}
 	return nil
+}
+
+func (s *UserStore) getByUsername(ctx context.Context, username string, isActive bool) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
+	defer cancel()
+	query := `
+		select id, first_name, last_name, email, username, created_at, role_id
+		from "user" where username = $1 and is_active = true
+	`
+	if isActive {
+		query += ` AND is_active = true`
+	}
+
+	var user models.User
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		username,
+	).Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Username,
+		&user.CreatedAt,
+		&user.Role.ID,
+	)
+	if err != nil {
+		return nil, errorUserTransform(err)
+	}
+	return &user, nil
 }
