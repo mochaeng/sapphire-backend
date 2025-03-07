@@ -170,5 +170,12 @@ func (s *UserService) GetPostsFromUsername(ctx context.Context, username string,
 	userPosts.FirstName = user.FirstName
 	userPosts.LastName = user.LastName
 
-	return s.store.User.GetPostsFrom(ctx, userPosts)
+	posts, nextCursor, err := s.store.User.GetPostsFrom(ctx, userPosts)
+	if err != nil {
+		return nil, err
+	}
+
+	userPosts.NextCursor = nextCursor
+
+	return posts, nil
 }

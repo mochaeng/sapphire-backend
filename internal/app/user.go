@@ -270,6 +270,7 @@ func (app *Application) getUserPosts(w http.ResponseWriter, r *http.Request) {
 		FirstName: userPosts.FirstName,
 		LastName:  userPosts.LastName,
 	}
+	response.NextCursor = userPosts.NextCursor
 
 	for idx, post := range posts {
 		response.Posts[idx] = responses.PostResponse{

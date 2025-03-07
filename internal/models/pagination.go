@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"errors"
 	"net/http"
 	"strings"
@@ -90,36 +91,49 @@ func (feed *PaginateFeedQuery) Parse(r *http.Request) error {
 	return nil
 }
 
-const DefaultLimit = 10
+const (
+	LimitDefault = 10
+	LimitMax     = 15
 
-var DefaultCursor = time.Now()
+	ParametersMaxSize = 50
+)
+
+var DefaultCursor = sql.NullTime{Valid: false}
 
 type UserPosts struct {
-	UserID    int64
-	Limit     int
-	Cursor    time.Time
-	Username  string
-	FirstName string
-	LastName  string
+	UserID     int64
+	Limit      int
+	Cursor     sql.NullTime
+	Username   string
+	FirstName  string
+	LastName   string
+	NextCursor string
 }
 
 func (payload *UserPosts) Parser(limitParam, cursorParam string) error {
-	limit := DefaultLimit
+	limit := LimitDefault
 	if limitParam != "" {
-		numParsed, err := httpio.ParseAsInt(limitParam)
-		if err != nil {
-			return httpio.ErrInvalidSearchParamType
+		if len(limitParam) < ParametersMaxSize && len(limitParam) > 0 {
+			numParsed, err := httpio.ParseAsInt(limitParam)
+			if err != nil {
+				return httpio.ErrInvalidSearchParamType
+			}
+			if numParsed > LimitMax {
+				numParsed = LimitMax
+			}
+			limit = numParsed
 		}
-		limit = numParsed
 	}
 
 	cursor := DefaultCursor
 	if cursorParam != "" {
-		parsedTime, err := time.Parse(time.RFC3339, cursorParam)
-		if err != nil {
-			return httpio.ErrInvalidSearchParamType
+		if len(cursorParam) < ParametersMaxSize && len(cursorParam) > 0 {
+			parsedTime, err := time.Parse(time.RFC3339Nano, cursorParam)
+			if err != nil {
+				return httpio.ErrInvalidSearchParamType
+			}
+			cursor = sql.NullTime{Time: parsedTime, Valid: true}
 		}
-		cursor = parsedTime
 	}
 
 	payload.Limit = limit

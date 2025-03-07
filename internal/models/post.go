@@ -1,6 +1,9 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"time"
+)
 
 type Post struct {
 	ID        int64
@@ -8,8 +11,8 @@ type Post struct {
 	Tittle    string
 	Tags      []string
 	Media     sql.NullString
-	CreatedAt string
-	UpdatedAt string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	Comments  []Comment
 	User      *User
 }
