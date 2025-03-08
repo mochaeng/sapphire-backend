@@ -10,6 +10,7 @@ import (
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/cryptoutils"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/pagination"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"github.com/mochaeng/sapphire-backend/internal/store/cache"
 	"go.uber.org/zap"
@@ -159,7 +160,7 @@ func (s *UserService) Activate(ctx context.Context, token string) error {
 	return s.store.User.Activate(ctx, token)
 }
 
-func (s *UserService) GetPostsFromUsername(ctx context.Context, username string, userPosts *models.UserPosts) ([]*models.Post, error) {
+func (s *UserService) GetPostsFromUsername(ctx context.Context, username string, userPosts *pagination.UserPosts) ([]*models.Post, error) {
 	user, err := s.GetByUsername(ctx, username)
 	if err != nil {
 		return nil, ErrInvalidPayload

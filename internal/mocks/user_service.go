@@ -5,6 +5,7 @@ import (
 
 	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/pagination"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -42,7 +43,7 @@ func (m *MockUserService) GetProfile(ctx context.Context, username string) (*mod
 	return args.Get(0).(*models.UserProfile), args.Error(1)
 }
 
-func (m *MockUserService) GetPostsFromUsername(ctx context.Context, username string, userPosts *models.UserPosts) ([]*models.Post, error) {
+func (m *MockUserService) GetPostsFromUsername(ctx context.Context, username string, userPosts *pagination.UserPosts) ([]*models.Post, error) {
 	args := m.Called(ctx, username, userPosts)
 	return args.Get(0).([]*models.Post), args.Error(1)
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/pagination"
 )
 
 var (
@@ -43,7 +44,7 @@ type Store struct {
 		Activate(ctx context.Context, plainToken string) error
 		Delete(ctx context.Context, userID int64) error
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
-		GetPostsFrom(ctx context.Context, userPosts *models.UserPosts) ([]*models.Post, string, error)
+		GetPostsFrom(ctx context.Context, userPosts *pagination.UserPosts) ([]*models.Post, string, error)
 		CleanUpExpiredPendingAccounts(ctx context.Context) error
 
 		// this function should only be called during seed
@@ -52,7 +53,7 @@ type Store struct {
 		CreateAndActivate(ctx context.Context, user *models.User) error
 	}
 	Feed interface {
-		Get(ctx context.Context, userID int64, paginateQuery models.PaginateFeedQuery) ([]*models.PostWithMetadata, error)
+		Get(ctx context.Context, userID int64, paginateQuery pagination.PaginateFeedQuery) ([]*models.PostWithMetadata, string, error)
 	}
 	Session interface {
 		Create(ctx context.Context, session *models.Session) error

@@ -7,6 +7,7 @@ import (
 	"github.com/markbates/goth"
 	"github.com/mochaeng/sapphire-backend/internal/config"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/pagination"
 	"github.com/mochaeng/sapphire-backend/internal/models/payloads"
 )
 
@@ -18,7 +19,7 @@ type Service struct {
 		GetByUsername(ctx context.Context, username string) (*models.User, error)
 		GetCached(ctx context.Context, userID int64) (*models.User, error)
 		GetProfile(ctx context.Context, username string) (*models.UserProfile, error)
-		GetPostsFromUsername(ctx context.Context, username string, userPosts *models.UserPosts) ([]*models.Post, error)
+		GetPostsFromUsername(ctx context.Context, username string, userPosts *pagination.UserPosts) ([]*models.Post, error)
 		LinkOrCreateUserFromOAuth(ctx context.Context, gothUser *goth.User) (*models.User, error)
 	}
 	Post interface {
@@ -39,7 +40,7 @@ type Service struct {
 		InvalidateSession(sessionID string) error
 	}
 	Feed interface {
-		Get(ctx context.Context, userID int64, feedQuery *models.PaginateFeedQuery) ([]*models.PostWithMetadata, error)
+		Get(ctx context.Context, userID int64, feedQuery *pagination.PaginateFeedQuery) ([]*models.PostWithMetadata, error)
 	}
 }
 
@@ -62,5 +63,6 @@ func NewServices(serviceCfg *config.ServiceCfg) *Service {
 			serviceCfg.Mailer,
 			serviceCfg.Logger,
 		},
+		Feed: &FeedService{serviceCfg.Store},
 	}
 }

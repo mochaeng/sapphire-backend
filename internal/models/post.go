@@ -19,5 +19,5 @@ type Post struct {
 
 type PostWithMetadata struct {
 	Post
-	CommentCount int `json:"comment_count"`
+	CommentCount int `json:"comment_count,omitempty"`
 }

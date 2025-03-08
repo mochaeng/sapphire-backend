@@ -21,7 +21,7 @@ type UpdatePostResponse struct {
 type PostResponse struct {
 	ID        int64         `json:"id"`
 	Tittle    string        `json:"tittle,omitempty"`
-	Content   string        `json:"content,omitempty"`
+	Content   string        `json:"content"`
 	Tags      []string      `json:"tags,omitempty"`
 	MediaURL  string        `json:"media_url,omitempty"`
 	CreatedAt time.Time     `json:"created_at"`
@@ -42,5 +42,10 @@ type GetPostResponse struct {
 type GetUserPostsResponse struct {
 	Posts      []PostResponse `json:"posts"`
 	User       *UserResponse  `json:"user"`
+	NextCursor string         `json:"next_cursor,omitempty"`
+}
+
+type FeedResponse struct {
+	Posts      []PostResponse `json:"posts"`
 	NextCursor string         `json:"next_cursor,omitempty"`
 }

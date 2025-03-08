@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mochaeng/sapphire-backend/internal/httpio"
-	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/pagination"
 	"github.com/mochaeng/sapphire-backend/internal/models/responses"
 	"github.com/mochaeng/sapphire-backend/internal/services"
 	"github.com/mochaeng/sapphire-backend/internal/store"
@@ -254,7 +254,7 @@ func (app *Application) getUserPosts(w http.ResponseWriter, r *http.Request) {
 	limitParam := query.Get("limit")
 	cursorParam := query.Get("cursor")
 
-	userPosts := models.UserPosts{}
+	userPosts := pagination.UserPosts{}
 	userPosts.Parser(limitParam, cursorParam)
 
 	posts, err := app.Service.User.GetPostsFromUsername(r.Context(), username, &userPosts)

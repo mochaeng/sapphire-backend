@@ -5,11 +5,11 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
-	"fmt"
 	"time"
 
 	"github.com/lib/pq"
 	"github.com/mochaeng/sapphire-backend/internal/models"
+	"github.com/mochaeng/sapphire-backend/internal/models/pagination"
 	"github.com/mochaeng/sapphire-backend/internal/store"
 	"github.com/mochaeng/sapphire-backend/internal/testutils"
 )
@@ -289,7 +289,7 @@ func (s *UserStore) GetProfile(ctx context.Context, username string) (*models.Us
 	return &profile, nil
 }
 
-func (s *UserStore) GetPostsFrom(ctx context.Context, userPosts *models.UserPosts) ([]*models.Post, string, error) {
+func (s *UserStore) GetPostsFrom(ctx context.Context, userPosts *pagination.UserPosts) ([]*models.Post, string, error) {
 	ctx, cancel := context.WithTimeout(ctx, store.QueryTimeoutDuration)
 	defer cancel()
 
@@ -331,17 +331,16 @@ func (s *UserStore) GetPostsFrom(ctx context.Context, userPosts *models.UserPost
 		}
 		posts = append(posts, post)
 	}
+	if err = rows.Err(); err != nil {
+		return nil, "", err
+	}
 
 	var nextCursor string
 	if len(posts) > userPosts.Limit {
-		fmt.Println(len(posts), userPosts.Limit)
 		nextCursor = posts[userPosts.Limit-1].CreatedAt.Format(time.RFC3339Nano)
 		posts = posts[:userPosts.Limit]
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, "", err
-	}
 	return posts, nextCursor, nil
 }
 
