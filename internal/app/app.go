@@ -81,7 +81,7 @@ func (app *Application) Mount() http.Handler {
 					r.Put("/unfollow", app.unfollowUserHandler)
 				})
 			})
-			r.With(app.authTokenMiddleware).Get("/feed", app.GetUserFeedHandler)
+			r.With(app.authTokenMiddleware).Post("/feed", app.GetUserFeedHandler)
 			r.Route("/by", func(r chi.Router) {
 				r.Get("/{username}", app.getUserByUsername)
 			})

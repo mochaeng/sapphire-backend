@@ -21,11 +21,12 @@ func (s *FeedStore) Get(ctx context.Context, userID int64, paginateQuery paginat
 	query := `
 		select
 			p.id, p.user_id, p."content", p.created_at, p.media_url , u.username,
-	 		u.first_name, u.last_name
+	 	u.first_name, u.last_name
 		from post p
 		left join "user" u on p.user_id = u.id
-		left join follower f on f.followed_id = p.user_id or p.user_id = $1
-		where f.follower_id = $1 and p.created_at < coalesce($2::timestamp, now())
+		left join follower f on f.followed_id = p.user_id and f.follower_id = $1
+		where (p.user_id = $1 or f.follower_id is not null)
+			and p.created_at < coalesce($2::timestamp, now())
 		order by p.created_at desc, p.id desc
 		limit $3;
 	`

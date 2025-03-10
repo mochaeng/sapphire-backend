@@ -22,17 +22,8 @@ import (
 //	@Failure		400		{object}	error
 //	@Failure		500		{object}	error
 //	@Security		ApiKeyAuth
-//	@Router			/user/feed [get]
+//	@Router			/user/feed [post]
 func (app *Application) GetUserFeedHandler(w http.ResponseWriter, r *http.Request) {
-	// feedQuery := pagination.PaginateFeedQuery{
-	// 	Limit:  20,
-	// 	Cursor: 0,
-	// 	Sort:   "desc",
-	// }
-	// if err := feedQuery.Parse(r); err != nil {
-	// 	app.BadRequestResponse(w, r, err)
-	// 	return
-	// }
 	query := r.URL.Query()
 	limitParam := query.Get("limit")
 	cursorParam := query.Get("cursor")
